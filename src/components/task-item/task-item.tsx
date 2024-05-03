@@ -80,6 +80,8 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     }
   };
 
+  const isProject = task.type === "project";
+
   return (
     <g
       onKeyDown={e => {
@@ -110,10 +112,12 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       {taskItem}
       <text
         x={getX()}
-        y={task.y + taskHeight * 0.5}
+        y={isProject ? task.y - taskHeight / 3 : task.y + taskHeight * 0.5}
         className={
           isTextInside
-            ? style.barLabel
+            ? isProject
+              ? style.barProjectLabel
+              : style.barLabel
             : style.barLabel && style.barLabelOutside
         }
         ref={textRef}

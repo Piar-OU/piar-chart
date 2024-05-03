@@ -21,3 +21,16 @@
   user-select: none;
   pointer-events: none;
 }
+
+.barProjectLabel {
+  fill: #006d75;
+  text-anchor: middle;
+  font-weight: normal;
+  dominant-baseline: central;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
