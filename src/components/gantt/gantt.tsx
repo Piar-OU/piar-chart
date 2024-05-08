@@ -90,6 +90,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
   const [selectedTask, setSelectedTask] = useState<BarTask>();
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
   const svgWidth = dateSetup.dates.length * columnWidth;
   const ganttFullHeight = barTasks.length * rowHeight;
@@ -389,14 +390,18 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       onExpanderClick({ ...task, hideChildren: !task.hideChildren });
     }
   };
+  const handleHoveredTask = (id: string | null) => () => setHoveredTaskId(id);
+
   const gridProps: GridProps = {
     columnWidth,
     svgWidth,
     tasks: tasks,
+    hoveredTaskId,
     rowHeight,
     dates: dateSetup.dates,
     todayColor,
-    rtl
+    rtl,
+    setHoveredTaskId: handleHoveredTask,
   };
   const calendarProps: CalendarProps = {
     dateSetup,
@@ -445,8 +450,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     ganttHeight,
     horizontalContainerClass: styles.horizontalContainer,
     selectedTask,
+    hoveredTaskId,
     taskListRef,
     setSelectedTask: handleSelectedTask,
+    setHoveredTaskId: handleHoveredTask,
     onExpanderClick: handleExpanderClick,
     TaskListHeader,
     TaskListTable,

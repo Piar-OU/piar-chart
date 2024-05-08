@@ -6,20 +6,24 @@ import styles from "./grid.module.css";
 export type GridBodyProps = {
   tasks: Task[];
   dates: Date[];
+  hoveredTaskId: string | null;
   svgWidth: number;
   rowHeight: number;
   columnWidth: number;
   todayColor: string;
   rtl: boolean;
+  setHoveredTaskId: (id: string | null) => () => void;
 };
 export const GridBody: React.FC<GridBodyProps> = ({
   tasks,
   dates,
+  hoveredTaskId,
   rowHeight,
   svgWidth,
   columnWidth,
   todayColor,
   rtl,
+  setHoveredTaskId,
 }) => {
   let y = 0;
   const gridRows: ReactChild[] = [];
@@ -36,12 +40,16 @@ export const GridBody: React.FC<GridBodyProps> = ({
   for (const task of tasks) {
     gridRows.push(
       <rect
+        onMouseMove={setHoveredTaskId(task.id)}
+        onMouseLeave={setHoveredTaskId(null)}
         key={"Row" + task.id}
         x="0"
         y={y}
         width={svgWidth}
         height={rowHeight}
-        className={styles.gridRow}
+        className={
+          hoveredTaskId === task.id ? styles.gridRowHovered : styles.gridRow
+        }
       />
     );
     rowLines.push(

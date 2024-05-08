@@ -22,6 +22,7 @@ const dateTimeOptions: Intl.DateTimeFormatOptions = {
 };
 
 export const TaskListTableDefault: React.FC<{
+  hoveredTaskId: string | null;
   rowHeight: number;
   rowWidth: string;
   fontFamily: string;
@@ -31,6 +32,7 @@ export const TaskListTableDefault: React.FC<{
   selectedTaskId: string;
   setSelectedTask: (taskId: string) => void;
   onExpanderClick: (task: Task) => void;
+  setHoveredTaskId: (id: string | null) => () => void;
 }> = ({
   rowHeight,
   rowWidth,

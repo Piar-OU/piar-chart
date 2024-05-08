@@ -15,6 +15,8 @@ export type TaskListProps = {
   taskListRef: React.RefObject<HTMLDivElement>;
   horizontalContainerClass?: string;
   selectedTask: BarTask | undefined;
+  hoveredTaskId: string | null;
+  setHoveredTaskId: (id: string | null) => () => void;
   setSelectedTask: (task: string) => void;
   onExpanderClick: (task: Task) => void;
   TaskListHeader: React.FC<{
@@ -24,6 +26,7 @@ export type TaskListProps = {
     fontSize: string;
   }>;
   TaskListTable: React.FC<{
+    hoveredTaskId: string | null;
     rowHeight: number;
     rowWidth: string;
     fontFamily: string;
@@ -32,6 +35,7 @@ export type TaskListProps = {
     tasks: Task[];
     selectedTaskId: string;
     setSelectedTask: (taskId: string) => void;
+    setHoveredTaskId: (id: string | null) => () => void;
     onExpanderClick: (task: Task) => void;
   }>;
 };
@@ -44,8 +48,10 @@ export const TaskList: React.FC<TaskListProps> = ({
   rowHeight,
   scrollY,
   tasks,
+  hoveredTaskId,
   selectedTask,
   setSelectedTask,
+  setHoveredTaskId,
   onExpanderClick,
   locale,
   ganttHeight,
@@ -69,6 +75,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   };
   const selectedTaskId = selectedTask ? selectedTask.id : "";
   const tableProps = {
+    hoveredTaskId,
     rowHeight,
     rowWidth,
     fontFamily,
@@ -77,6 +84,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     locale,
     selectedTaskId: selectedTaskId,
     setSelectedTask,
+    setHoveredTaskId,
     onExpanderClick,
   };
 
