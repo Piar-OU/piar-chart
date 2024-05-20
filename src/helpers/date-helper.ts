@@ -70,13 +70,18 @@ export const startOfDate = (date: Date, scale: DateHelperScales) => {
 };
 
 export const ganttDateRange = (
-  tasks: Task[],
+  tasks: (Task | Task[])[],
   viewMode: ViewMode,
   preStepsCount: number
 ) => {
-  let newStartDate: Date = tasks[0].start;
-  let newEndDate: Date = tasks[0].start;
-  for (const task of tasks) {
+  const flattenedTasks: Task[] = tasks.flatMap(task =>
+    Array.isArray(task) ? task : [task]
+  );
+
+  let newStartDate: Date = flattenedTasks[0].start;
+  let newEndDate: Date = flattenedTasks[0].end;
+
+  for (const task of flattenedTasks) {
     if (task.start < newStartDate) {
       newStartDate = task.start;
     }
@@ -84,6 +89,7 @@ export const ganttDateRange = (
       newEndDate = task.end;
     }
   }
+
   switch (viewMode) {
     case ViewMode.Year:
       newStartDate = addToDate(newStartDate, -1, "year");
@@ -138,6 +144,7 @@ export const ganttDateRange = (
       newEndDate = addToDate(newEndDate, 1, "day");
       break;
   }
+
   return [newStartDate, newEndDate];
 };
 

@@ -4,7 +4,7 @@ import { addToDate } from "../../helpers/date-helper";
 import styles from "./grid.module.css";
 
 export type GridBodyProps = {
-  tasks: Task[];
+  tasks: (Task | Task[])[];
   dates: Date[];
   hoveredTaskId: string | null;
   svgWidth: number;
@@ -40,21 +40,25 @@ export const GridBody: React.FC<GridBodyProps> = ({
   for (const task of tasks) {
     gridRows.push(
       <rect
-        onMouseMove={setHoveredTaskId(task.id)}
+        onMouseMove={setHoveredTaskId(
+          Array.isArray(task) ? task?.[0]?.id : task.id
+        )}
         onMouseLeave={setHoveredTaskId(null)}
-        key={"Row" + task.id}
+        key={"Row" + (Array.isArray(task) ? task[0].id : task.id)}
         x="0"
         y={y}
         width={svgWidth}
         height={rowHeight}
         className={
-          hoveredTaskId === task.id ? styles.gridRowHovered : styles.gridRow
+          hoveredTaskId === (Array.isArray(task) ? task[0].id : task.id)
+            ? styles.gridRowHovered
+            : styles.gridRow
         }
       />
     );
     rowLines.push(
       <line
-        key={"RowLine" + task.id}
+        key={"RowLine" + (Array.isArray(task) ? task[0].id : task.id)}
         x="0"
         y1={y + rowHeight}
         x2={svgWidth}

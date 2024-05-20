@@ -3,7 +3,7 @@ import { BarTask, TaskTypeInternal } from "../types/bar-task";
 import { BarMoveAction } from "../types/gantt-task-actions";
 
 export const convertToBarTasks = (
-  tasks: Task[],
+  tasks: (Task | Task[])[],
   dates: Date[],
   columnWidth: number,
   rowHeight: number,
@@ -22,10 +22,18 @@ export const convertToBarTasks = (
   milestoneBackgroundColor: string,
   milestoneBackgroundSelectedColor: string
 ) => {
-  let barTasks = tasks.map((t, i) => {
+  let flattenedTasks: { task: Task; groupIndex: number }[] = tasks.flatMap(
+    (task, i) => {
+      return Array.isArray(task)
+        ? task.map(t => ({ task: t, groupIndex: i }))
+        : [{ task, groupIndex: i }];
+    }
+  );
+
+  let barTasks: BarTask[] = flattenedTasks.map(({ task, groupIndex }) => {
     return convertToBarTask(
-      t,
-      i,
+      task,
+      groupIndex,
       dates,
       columnWidth,
       rowHeight,
@@ -46,7 +54,6 @@ export const convertToBarTasks = (
     );
   });
 
-  // set dependencies
   barTasks = barTasks.map(task => {
     const dependencies = task.dependencies || [];
     for (let j = 0; j < dependencies.length; j++) {
@@ -133,6 +140,7 @@ const convertToBarTask = (
       );
       break;
   }
+  barTask.groupIndex = index;
   return barTask;
 };
 
@@ -173,7 +181,6 @@ const convertToBar = (
     rtl
   );
   const y = taskYCoordinate(index, rowHeight, taskHeight);
-  const hideChildren = task.type === "project" ? task.hideChildren : undefined;
 
   const styles = {
     backgroundColor: barBackgroundColor,
@@ -193,7 +200,6 @@ const convertToBar = (
     progressWidth,
     barCornerRadius,
     handleWidth,
-    hideChildren,
     height: taskHeight,
     barChildren: [],
     styles,
@@ -240,7 +246,6 @@ const convertToMilestone = (
     typeInternal: task.type,
     progress: 0,
     height: rotatedHeight,
-    hideChildren: undefined,
     barChildren: [],
     styles,
   };
@@ -255,6 +260,7 @@ const taskXCoordinate = (xDate: Date, dates: Date[], columnWidth: number) => {
   const x = index * columnWidth + percentOfInterval * columnWidth;
   return x;
 };
+
 const taskXCoordinateRTL = (
   xDate: Date,
   dates: Date[],
@@ -264,6 +270,7 @@ const taskXCoordinateRTL = (
   x += columnWidth;
   return x;
 };
+
 const taskYCoordinate = (
   index: number,
   rowHeight: number,
@@ -309,6 +316,7 @@ const progressByX = (x: number, task: BarTask) => {
     return progressPercent;
   }
 };
+
 const progressByXRTL = (x: number, task: BarTask) => {
   if (x >= task.x2) return 0;
   else if (x <= task.x1) return 100;

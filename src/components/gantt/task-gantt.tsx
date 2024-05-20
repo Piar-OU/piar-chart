@@ -35,11 +35,11 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
-   const currentTimePosition = useMemo(
-     () =>
-       calculateCurrentTimePosition(dates, currentTime, viewMode, columnWidth),
-     [columnWidth, currentTime, dates, viewMode]
-   ); 
+  const currentTimePosition = useMemo(
+    () =>
+      calculateCurrentTimePosition(dates, currentTime, viewMode, columnWidth),
+    [columnWidth, currentTime, dates, viewMode]
+  );
 
   useEffect(() => {
     if (horizontalContainerRef.current) {
@@ -59,8 +59,6 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
     }, 60000);
     return () => clearInterval(timer);
   }, []);
-
- 
 
   return (
     <div
@@ -88,7 +86,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={gridProps.svgWidth}
-          height={barProps.rowHeight * barProps.tasks.length}
+          height={barProps.rowHeight * barProps.uneducatedTasks.length}
           fontFamily={barProps.fontFamily}
           ref={ganttSVGRef}
         >
@@ -99,9 +97,10 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
               x1={currentTimePosition}
               y1={0}
               x2={currentTimePosition}
-              y2={barProps.rowHeight * barProps.tasks.length}
+              y2={barProps.rowHeight * barProps.uneducatedTasks.length}
               stroke="red"
-              strokeWidth={1}
+              strokeWidth={2}
+              strokeDasharray="8 8"
             />
           )}
         </svg>

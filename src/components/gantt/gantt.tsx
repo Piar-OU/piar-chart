@@ -21,7 +21,6 @@ import { convertToBarTasks } from "../../helpers/bar-helper";
 import { GanttEvent } from "../../types/gantt-task-actions";
 import { DateSetup } from "../../types/date-setup";
 import { HorizontalScroll } from "../other/horizontal-scroll";
-import { removeHiddenTasks, sortTasks } from "../../helpers/other-helper";
 import styles from "./gantt.module.css";
 
 export const Gantt: React.FunctionComponent<GanttProps> = ({
@@ -93,7 +92,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
   const svgWidth = dateSetup.dates.length * columnWidth;
-  const ganttFullHeight = barTasks.length * rowHeight;
+  const ganttFullHeight = tasks.length * rowHeight;
 
   const [scrollY, setScrollY] = useState(0);
   const [scrollX, setScrollX] = useState(-1);
@@ -101,18 +100,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
   // task change events
   useEffect(() => {
-    let filteredTasks: Task[];
-    if (onExpanderClick) {
-      filteredTasks = removeHiddenTasks(tasks);
-    } else {
-      filteredTasks = tasks;
-    }
-    filteredTasks = filteredTasks.sort(sortTasks);
-    const [startDate, endDate] = ganttDateRange(
-      filteredTasks,
-      viewMode,
-      preStepsCount
-    );
+    const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
     let newDates = seedDates(startDate, endDate, viewMode);
     if (rtl) {
       newDates = newDates.reverse();
@@ -123,7 +111,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     setDateSetup({ dates: newDates, viewMode });
     setBarTasks(
       convertToBarTasks(
-        filteredTasks,
+        tasks,
         newDates,
         columnWidth,
         rowHeight,
@@ -239,13 +227,13 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     if (taskListRef.current) {
       setTaskListWidth(taskListRef.current.offsetWidth);
     }
-  }, [taskListRef, listCellWidth]);
+  }, [taskListRef.current?.offsetWidth, listCellWidth]);
 
   useEffect(() => {
     if (wrapperRef.current) {
       setSvgContainerWidth(wrapperRef.current.offsetWidth - taskListWidth);
     }
-  }, [wrapperRef, taskListWidth]);
+  }, [wrapperRef.current?.offsetWidth, taskListWidth]);
 
   useEffect(() => {
     if (ganttHeight) {
@@ -414,6 +402,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     rtl,
   };
   const barProps: TaskGanttContentProps = {
+    uneducatedTasks: tasks,
     tasks: barTasks,
     dates: dateSetup.dates,
     ganttEvent,
@@ -458,6 +447,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     TaskListHeader,
     TaskListTable,
   };
+
   return (
     <div>
       <div
