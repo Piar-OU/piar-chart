@@ -13,6 +13,7 @@ import {
 
 export type TaskGanttContentProps = {
   uneducatedTasks: (Task | Task[])[];
+  fieldFiltering?: Record<string, any>;
   tasks: BarTask[];
   dates: Date[];
   ganttEvent: GanttEvent;
@@ -35,6 +36,7 @@ export type TaskGanttContentProps = {
 
 export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   tasks,
+  fieldFiltering,
   dates,
   ganttEvent,
   selectedTask,
@@ -84,6 +86,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       event.preventDefault();
 
       point.x = event.clientX;
+
       const cursor = point.matrixTransform(
         svg?.current.getScreenCTM()?.inverse()
       );
@@ -112,6 +115,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       const cursor = point.matrixTransform(
         svg?.current.getScreenCTM()?.inverse()
       );
+
       const { changedTask: newChangedTask } = handleTaskBySVGMouseEvent(
         cursor.x,
         action as BarMoveAction,
@@ -122,10 +126,10 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
         rtl
       );
 
-      const isNotLikeOriginal =
-        originalSelectedTask.start !== newChangedTask.start ||
-        originalSelectedTask.end !== newChangedTask.end ||
-        originalSelectedTask.progress !== newChangedTask.progress;
+      const isNotLikeOriginal = (originalTask: BarTask, newTask: BarTask) =>
+        originalTask.start !== newTask.start ||
+        originalTask.end !== newTask.end ||
+        originalTask.progress !== newTask.progress;
 
       // remove listeners
       svg.current.removeEventListener("mousemove", handleMouseMove);
@@ -135,38 +139,49 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
 
       // custom operation start
       let operationSuccess = true;
+
+      const handleChange = async (task: BarTask, originalTask: BarTask) => {
+        if (
+          (action === "move" || action === "end" || action === "start") &&
+          onDateChange &&
+          isNotLikeOriginal(originalTask, task)
+        ) {
+          try {
+            const result = await onDateChange(task, task.barChildren);
+            if (result !== undefined) {
+              operationSuccess = result;
+            }
+          } catch (error) {
+            operationSuccess = false;
+          }
+        } else if (onProgressChange && isNotLikeOriginal(originalTask, task)) {
+          try {
+            const result = await onProgressChange(task, task.barChildren);
+            if (result !== undefined) {
+              operationSuccess = result;
+            }
+          } catch (error) {
+            operationSuccess = false;
+          }
+        }
+      };
+
       if (
-        (action === "move" || action === "end" || action === "start") &&
-        onDateChange &&
-        isNotLikeOriginal
+        Array.isArray(newChangedTask) &&
+        Array.isArray(originalSelectedTask)
       ) {
-        try {
-          const result = await onDateChange(
-            newChangedTask,
-            newChangedTask.barChildren
-          );
-          if (result !== undefined) {
-            operationSuccess = result;
-          }
-        } catch (error) {
-          operationSuccess = false;
+        for (let i = 0; i < newChangedTask.length; i++) {
+          await handleChange(newChangedTask[i], originalSelectedTask[i]);
         }
-      } else if (onProgressChange && isNotLikeOriginal) {
-        try {
-          const result = await onProgressChange(
-            newChangedTask,
-            newChangedTask.barChildren
-          );
-          if (result !== undefined) {
-            operationSuccess = result;
-          }
-        } catch (error) {
-          operationSuccess = false;
-        }
+      } else if (
+        !Array.isArray(newChangedTask) &&
+        !Array.isArray(originalSelectedTask)
+      ) {
+        await handleChange(newChangedTask, originalSelectedTask);
       }
 
       // If operation is failed - return old state
-      if (!operationSuccess) {
+      if (!operationSuccess && !Array.isArray(originalSelectedTask)) {
         setFailedTask(originalSelectedTask);
       }
     };
@@ -249,11 +264,25 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       const cursor = point.matrixTransform(
         svg.current.getScreenCTM()?.inverse()
       );
-      setInitEventX1Delta(cursor.x - task.x1);
+      setInitEventX1Delta(cursor.x);
       setGanttEvent({
         action,
-        changedTask: task,
-        originalSelectedTask: task,
+        changedTask:
+          !!fieldFiltering && Object.keys(fieldFiltering)[0]
+            ? tasks.filter(
+                task =>
+                  task[Object.keys(fieldFiltering)[0]] ===
+                  Object.values(fieldFiltering)[0]
+              )
+            : task,
+        originalSelectedTask:
+          !!fieldFiltering && Object.keys(fieldFiltering)[0]
+            ? tasks.filter(
+                task =>
+                  task[Object.keys(fieldFiltering)[0]] ===
+                  Object.values(fieldFiltering)[0]
+              )
+            : task,
       });
     } else {
       setGanttEvent({

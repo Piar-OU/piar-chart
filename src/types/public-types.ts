@@ -125,7 +125,6 @@ export interface StylingOption {
     fontSize: string;
   }>;
   TaskListTable?: React.FC<{
-    hoveredTaskId: string | null;
     rowHeight: number;
     rowWidth: string;
     fontFamily: string;
@@ -137,11 +136,12 @@ export interface StylingOption {
      * Sets selected task by id
      */
     setSelectedTask: (taskId: string) => void;
-    setHoveredTaskId: (id: string | null) => () => void;
     onExpanderClick: (task: Task) => void;
   }>;
 }
 
 export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   tasks: (Task | Task[])[];
+  isMoveProject: boolean;
+  fieldFiltering?: Record<string, any>;
 }

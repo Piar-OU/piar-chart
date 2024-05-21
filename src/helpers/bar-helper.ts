@@ -392,37 +392,46 @@ const dateByX = (
 export const handleTaskBySVGMouseEvent = (
   svgX: number,
   action: BarMoveAction,
-  selectedTask: BarTask,
+  selectedTask: BarTask | BarTask[],
   xStep: number,
   timeStep: number,
   initEventX1Delta: number,
   rtl: boolean
-): { isChanged: boolean; changedTask: BarTask } => {
-  let result: { isChanged: boolean; changedTask: BarTask };
-  switch (selectedTask.type) {
-    case "milestone":
-      result = handleTaskBySVGMouseEventForMilestone(
-        svgX,
-        action,
-        selectedTask,
-        xStep,
-        timeStep,
-        initEventX1Delta
-      );
-      break;
-    default:
-      result = handleTaskBySVGMouseEventForBar(
-        svgX,
-        action,
-        selectedTask,
-        xStep,
-        timeStep,
-        initEventX1Delta,
-        rtl
-      );
-      break;
+): { isChanged: boolean; changedTask: BarTask | BarTask[] } => {
+  const handleSingleTask = (
+    task: BarTask
+  ): { isChanged: boolean; changedTask: BarTask } => {
+    switch (task.type) {
+      case "milestone":
+        return handleTaskBySVGMouseEventForMilestone(
+          svgX,
+          action,
+          task,
+          xStep,
+          timeStep,
+          initEventX1Delta - task.x1
+        );
+      default:
+        return handleTaskBySVGMouseEventForBar(
+          svgX,
+          action,
+          task,
+          xStep,
+          timeStep,
+          initEventX1Delta - task.x1,
+          rtl
+        );
+    }
+  };
+
+  if (Array.isArray(selectedTask)) {
+    const results = selectedTask.map(handleSingleTask);
+    const isChanged = results.some(result => result.isChanged);
+    const changedTasks = results.map(result => result.changedTask);
+    return { isChanged, changedTask: changedTasks };
+  } else {
+    return handleSingleTask(selectedTask);
   }
-  return result;
 };
 
 const handleTaskBySVGMouseEventForBar = (
@@ -527,6 +536,7 @@ const handleTaskBySVGMouseEventForBar = (
         xStep,
         selectedTask
       );
+
       isChanged = newMoveX1 !== selectedTask.x1;
       if (isChanged) {
         changedTask.start = dateByX(
@@ -557,6 +567,7 @@ const handleTaskBySVGMouseEventForBar = (
       break;
     }
   }
+
   return { isChanged, changedTask };
 };
 

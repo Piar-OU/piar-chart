@@ -25,6 +25,7 @@ import styles from "./gantt.module.css";
 
 export const Gantt: React.FunctionComponent<GanttProps> = ({
   tasks,
+  fieldFiltering,
   headerHeight = 50,
   columnWidth = 60,
   listCellWidth = "155px",
@@ -189,25 +190,64 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     if (changedTask) {
       if (action === "delete") {
         setGanttEvent({ action: "" });
-        setBarTasks(barTasks.filter(t => t.id !== changedTask.id));
+
+        const filterTasks = (
+          tasks: BarTask[],
+          changedTask: BarTask | BarTask[]
+        ) => {
+          const changedTaskIds = Array.isArray(changedTask)
+            ? new Set(changedTask.map(task => task.id))
+            : new Set([changedTask.id]);
+
+          return tasks.reduce((acc, task) => {
+            if (!changedTaskIds.has(task.id)) {
+              acc.push(task);
+            }
+            return acc;
+          }, [] as BarTask[]);
+        };
+
+        const filteredTasks = filterTasks(barTasks, changedTask);
+
+        setBarTasks(filteredTasks);
       } else if (
         action === "move" ||
         action === "end" ||
         action === "start" ||
         action === "progress"
       ) {
-        const prevStateTask = barTasks.find(t => t.id === changedTask.id);
-        if (
-          prevStateTask &&
-          (prevStateTask.start.getTime() !== changedTask.start.getTime() ||
-            prevStateTask.end.getTime() !== changedTask.end.getTime() ||
-            prevStateTask.progress !== changedTask.progress)
-        ) {
-          // actions for change
-          const newTaskList = barTasks.map(t =>
-            t.id === changedTask.id ? changedTask : t
-          );
-          setBarTasks(newTaskList);
+        const changedTasksArray = Array.isArray(changedTask)
+          ? changedTask
+          : [changedTask];
+
+        const changedTasksArrayMap = new Map(
+          changedTasksArray.map(ct => [ct.id, ct])
+        );
+
+        const unchangedTasks: BarTask[] = [];
+        const changedTasks: BarTask[] = [];
+        let shouldUpdate = false;
+
+        barTasks.forEach(t => {
+          const changedTaskItem = changedTasksArrayMap.get(t.id);
+          if (changedTaskItem) {
+            if (
+              t.start.getTime() !== changedTaskItem.start.getTime() ||
+              t.end.getTime() !== changedTaskItem.end.getTime() ||
+              t.progress !== changedTaskItem.progress
+            ) {
+              shouldUpdate = true;
+              changedTasks.push(changedTaskItem);
+              return;
+            }
+          }
+          unchangedTasks.push(t);
+        });
+
+        const finalTaskList = [...unchangedTasks, ...changedTasks];
+
+        if (shouldUpdate) {
+          setBarTasks(finalTaskList);
         }
       }
     }
@@ -403,6 +443,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   };
   const barProps: TaskGanttContentProps = {
     uneducatedTasks: tasks,
+    fieldFiltering,
     tasks: barTasks,
     dates: dateSetup.dates,
     ganttEvent,
@@ -478,7 +519,11 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
             fontSize={fontSize}
             scrollX={scrollX}
             scrollY={scrollY}
-            task={ganttEvent.changedTask}
+            task={
+              Array.isArray(ganttEvent.changedTask)
+                ? ganttEvent.changedTask[0]
+                : ganttEvent.changedTask
+            }
             headerHeight={headerHeight}
             taskListWidth={taskListWidth}
             TooltipContent={TooltipContent}
