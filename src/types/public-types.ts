@@ -131,17 +131,18 @@ export interface StylingOption {
     fontSize: string;
     locale: string;
     tasks: Task[];
+    hoveredTaskId: string | null;
     selectedTaskId: string;
     /**
      * Sets selected task by id
      */
     setSelectedTask: (taskId: string) => void;
+    setHoveredTaskId: (id: string | null) => () => void;
     onExpanderClick: (task: Task) => void;
   }>;
 }
 
 export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   tasks: (Task | Task[])[];
-  isMoveProject: boolean;
   fieldFiltering?: Record<string, any>;
 }
