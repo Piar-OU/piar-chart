@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { EventOption, Task } from "../../types/public-types";
+import { EventOption, Task, ViewMode } from "../../types/public-types";
 import { BarTask } from "../../types/bar-task";
 import { Arrow } from "../other/arrow";
 import { handleTaskBySVGMouseEvent } from "../../helpers/bar-helper";
@@ -16,6 +16,7 @@ export type TaskGanttContentProps = {
   fieldFiltering?: Record<string, any>;
   tasks: BarTask[];
   dates: Date[];
+  viewMode: ViewMode;
   ganttEvent: GanttEvent;
   selectedTask: BarTask | undefined;
   rowHeight: number;
@@ -32,12 +33,14 @@ export type TaskGanttContentProps = {
   setGanttEvent: (value: GanttEvent) => void;
   setFailedTask: (value: BarTask | null) => void;
   setSelectedTask: (taskId: string) => void;
+  setHoveredBarTaskId: (value: React.SetStateAction<string | null>) => void;
 } & EventOption;
 
 export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   tasks,
   fieldFiltering,
   dates,
+  viewMode,
   ganttEvent,
   selectedTask,
   rowHeight,
@@ -52,6 +55,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   rtl,
   setGanttEvent,
   setFailedTask,
+  setHoveredBarTaskId,
   setSelectedTask,
   onDateChange,
   onProgressChange,
@@ -134,7 +138,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       // remove listeners
       svg.current.removeEventListener("mousemove", handleMouseMove);
       svg.current.removeEventListener("mouseup", handleMouseUp);
-      setGanttEvent({ action: "" });
+      setGanttEvent({ action: "move-finished" });
       setIsMoving(false);
 
       // custom operation start
@@ -251,6 +255,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     } else if (action === "mouseleave") {
       if (ganttEvent.action === "mouseenter") {
         setGanttEvent({ action: "" });
+        return;
       }
     } else if (action === "dblclick") {
       !!onDoubleClick && onDoubleClick(task);
@@ -307,7 +312,9 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               isDelete={!task.isDisabled}
               onEventStart={handleBarEventStart}
               key={task.id}
+              viewMode={viewMode}
               isSelected={!!selectedTask && task.id === selectedTask.id}
+              setHoveredBarTaskId={setHoveredBarTaskId}
               rtl={rtl}
             />
           );

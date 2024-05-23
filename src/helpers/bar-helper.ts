@@ -606,3 +606,13 @@ const handleTaskBySVGMouseEventForMilestone = (
   }
   return { isChanged, changedTask };
 };
+
+export const measureTextWidth = (text: string, font: string): number => {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (context) {
+    context.font = font;
+    return context.measureText(text).width;
+  }
+  return 0;
+};

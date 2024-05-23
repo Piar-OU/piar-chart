@@ -26,7 +26,6 @@ export type TaskListProps = {
     fontSize: string;
   }>;
   TaskListTable: React.FC<{
-    hoveredTaskId: string | null;
     rowHeight: number;
     rowWidth: string;
     fontFamily: string;
@@ -34,6 +33,7 @@ export type TaskListProps = {
     locale: string;
     tasks: Task[];
     selectedTaskId: string;
+    hoveredTaskId: string | null;
     setSelectedTask: (taskId: string) => void;
     setHoveredTaskId: (id: string | null) => () => void;
     onExpanderClick: (task: Task) => void;

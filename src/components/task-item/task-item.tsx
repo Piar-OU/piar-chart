@@ -6,6 +6,8 @@ import { BarSmall } from "./bar/bar-small";
 import { Milestone } from "./milestone/milestone";
 import { Project } from "./project/project";
 import style from "./task-list.module.css";
+import { ViewMode } from "../../types/public-types";
+import { measureTextWidth } from "../../helpers/bar-helper";
 
 export type TaskItemProps = {
   task: BarTask;
@@ -15,7 +17,9 @@ export type TaskItemProps = {
   isDateChangeable: boolean;
   isDelete: boolean;
   isSelected: boolean;
+  viewMode: ViewMode;
   rtl: boolean;
+  setHoveredBarTaskId: (value: React.SetStateAction<string | null>) => void;
   onEventStart: (
     action: GanttContentMoveAction,
     selectedTask: BarTask,
@@ -30,14 +34,15 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     isDelete,
     taskHeight,
     isSelected,
+    viewMode,
     rtl,
+    setHoveredBarTaskId,
     onEventStart,
-  } = {
-    ...props,
-  };
+  } = props;
   const textRef = useRef<SVGTextElement>(null);
   const [taskItem, setTaskItem] = useState<JSX.Element>(<div />);
   const [isTextInside, setIsTextInside] = useState(true);
+  const [truncatedName, setTruncatedName] = useState(task.name);
 
   useEffect(() => {
     switch (task.typeInternal) {
@@ -58,9 +63,28 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
 
   useEffect(() => {
     if (textRef.current) {
-      setIsTextInside(textRef.current.getBBox().width < task.x2 - task.x1);
+      const isShowText =
+        viewMode !== ViewMode.Month &&
+        viewMode !== ViewMode.QuarterYear &&
+        viewMode !== ViewMode.Week &&
+        viewMode !== ViewMode.Year;
+      if (!isShowText) {
+        setTruncatedName("");
+        return;
+      }
+      const font = window.getComputedStyle(textRef.current).font;
+      const maxWidth = task.x2 - task.x1;
+      const textWidth = measureTextWidth(task.name, font);
+
+      const isTextInsideCalc = textWidth < maxWidth;
+      setIsTextInside(isTextInsideCalc);
+      if (!isTextInsideCalc) {
+        setTruncatedName(truncateText(task.name, (task.x2 - task.x1) * 0.8));
+      } else {
+        setTruncatedName(task.name);
+      }
     }
-  }, [textRef, task]);
+  }, [textRef, task.name, viewMode]);
 
   const getX = () => {
     const width = task.x2 - task.x1;
@@ -76,11 +100,25 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
         arrowIndent * 0.2
       );
     } else {
-      return task.x1 + width + arrowIndent * +hasChild + arrowIndent * 0.2;
+      return task.x1 * 1.2;
     }
   };
 
-  const isProject = task.type === "project";
+  const truncateText = (text: string, maxWidth: number) => {
+    if (!textRef.current) return text;
+    let truncated = text;
+    const ellipsis = "...";
+    const font = window.getComputedStyle(textRef.current).font;
+    let textWidth = measureTextWidth(task.name, font);
+
+    while (textWidth > maxWidth && truncated.length > 0) {
+      truncated = truncated.slice(0, -1);
+      textRef.current.textContent = truncated + ellipsis;
+      textWidth = measureTextWidth(task.name, font);
+    }
+
+    return truncated + ellipsis;
+  };
 
   return (
     <g
@@ -95,9 +133,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       }}
       onMouseEnter={e => {
         onEventStart("mouseenter", task, e);
+        setHoveredBarTaskId(task.id);
       }}
       onMouseLeave={e => {
         onEventStart("mouseleave", task, e);
+        setHoveredBarTaskId(null);
       }}
       onDoubleClick={e => {
         onEventStart("dblclick", task, e);
@@ -112,17 +152,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       {taskItem}
       <text
         x={getX()}
-        y={isProject ? task.y - taskHeight / 3 : task.y + taskHeight * 0.5}
-        className={
-          isTextInside
-            ? isProject
-              ? style.barProjectLabel
-              : style.barLabel
-            : style.barLabel && style.barLabelOutside
-        }
+        y={task.y + taskHeight * 0.5}
+        className={style.barLabel}
         ref={textRef}
       >
-        {task.name}
+        {truncatedName}
       </text>
     </g>
   );
