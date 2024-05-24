@@ -10,8 +10,13 @@
   fill: #f0f0f0;
 }
 
+
 .gridRowLine {
   stroke: #ebeff2;
+}
+
+.gridRowLineFirst {
+  stroke: #000000;
 }
 
 .gridTick {

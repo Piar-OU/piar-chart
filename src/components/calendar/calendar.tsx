@@ -361,12 +361,17 @@ export const Calendar: React.FC<CalendarProps> = ({
   }
   return (
     <g className="calendar" fontSize={fontSize} fontFamily={fontFamily}>
-      <rect
-        x={0}
-        y={0}
-        width={columnWidth * dateSetup.dates.length}
-        height={headerHeight}
-        className={styles.calendarHeader}
+      <path
+        d={`M 0 0 H ${columnWidth * dateSetup.dates.length} V ${
+          headerHeight + 1
+        } H 0 V 0 Z`}
+        fill="#ffffff"
+        stroke="#000000"
+        strokeWidth="1"
+        strokeDasharray={`0, 0, ${
+          columnWidth * dateSetup.dates.length
+        }, ${headerHeight}, ${columnWidth * dateSetup.dates.length}`}
+        strokeDashoffset="0"
       />
       {bottomValues} {topValues}
     </g>

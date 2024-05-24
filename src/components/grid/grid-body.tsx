@@ -34,7 +34,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
       y1={0}
       x2={svgWidth}
       y2={0}
-      className={styles.gridRowLine}
+      className={styles.gridRowLineFirst}
     />,
   ];
   for (const task of tasks) {
