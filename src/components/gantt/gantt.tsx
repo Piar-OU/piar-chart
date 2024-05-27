@@ -90,7 +90,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
 
   const [selectedTask, setSelectedTask] = useState<BarTask>();
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
-  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredBarTaskId, setHoveredBarTaskId] = useState<string | null>(null);
 
   const svgWidth = dateSetup.dates.length * columnWidth;
@@ -245,10 +245,18 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           unchangedTasks.push({
             ...t,
             styles: {
-              progressColor: "#8c8c8c",
-              progressSelectedColor: "#8c8c8c",
-              backgroundColor: "#d9d9d9",
-              backgroundSelectedColor: "#d9d9d9",
+              progressColor: fieldFiltering
+                ? "#8c8c8c"
+                : t.styles.progressColor,
+              progressSelectedColor: fieldFiltering
+                ? "#8c8c8c"
+                : t.styles.progressSelectedColor,
+              backgroundColor: fieldFiltering
+                ? "#d9d9d9"
+                : t.styles.backgroundColor,
+              backgroundSelectedColor: fieldFiltering
+                ? "#d9d9d9"
+                : t.styles.backgroundSelectedColor,
             },
           });
         });
@@ -289,6 +297,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     barBackgroundColor,
     barBackgroundSelectedColor,
     hoveredBarTaskId,
+    fieldFiltering,
   ]);
 
   useEffect(() => {
@@ -456,18 +465,19 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       onExpanderClick({ ...task, hideChildren: !task.hideChildren });
     }
   };
-  const handleHoveredTask = (id: string | null) => () => setHoveredTaskId(id);
+  const handleHoveredTask = (index: number | null) => () =>
+    setHoveredIndex(index);
 
   const gridProps: GridProps = {
     columnWidth,
     svgWidth,
     tasks: tasks,
-    hoveredTaskId,
+    hoveredIndex,
     rowHeight,
     dates: dateSetup.dates,
     todayColor,
     rtl,
-    setHoveredTaskId: handleHoveredTask,
+    setHoveredIndex: handleHoveredTask,
   };
   const calendarProps: CalendarProps = {
     dateSetup,
@@ -520,10 +530,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     ganttHeight,
     horizontalContainerClass: styles.horizontalContainer,
     selectedTask,
-    hoveredTaskId,
+    hoveredIndex,
     taskListRef,
     setSelectedTask: handleSelectedTask,
-    setHoveredTaskId: handleHoveredTask,
+    setHoveredIndex: handleHoveredTask,
     onExpanderClick: handleExpanderClick,
     TaskListHeader,
     TaskListTable,

@@ -131,13 +131,13 @@ export interface StylingOption {
     fontSize: string;
     locale: string;
     tasks: Task[];
-    hoveredTaskId: string | null;
+    hoveredIndex: number | null;
     selectedTaskId: string;
     /**
      * Sets selected task by id
      */
     setSelectedTask: (taskId: string) => void;
-    setHoveredTaskId: (id: string | null) => () => void;
+    setHoveredIndex: (id: number | null) => () => void;
     onExpanderClick: (task: Task) => void;
   }>;
 }

@@ -84,7 +84,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
         setTruncatedName(task.name);
       }
     }
-  }, [textRef, task.name, viewMode]);
+  }, [textRef, task, viewMode]);
 
   const getX = () => {
     const width = task.x2 - task.x1;

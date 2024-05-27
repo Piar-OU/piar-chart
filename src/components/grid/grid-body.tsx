@@ -6,24 +6,24 @@ import styles from "./grid.module.css";
 export type GridBodyProps = {
   tasks: (Task | Task[])[];
   dates: Date[];
-  hoveredTaskId: string | null;
+  hoveredIndex: number | null;
   svgWidth: number;
   rowHeight: number;
   columnWidth: number;
   todayColor: string;
   rtl: boolean;
-  setHoveredTaskId: (id: string | null) => () => void;
+  setHoveredIndex: (id: number | null) => () => void;
 };
 export const GridBody: React.FC<GridBodyProps> = ({
   tasks,
   dates,
-  hoveredTaskId,
+  hoveredIndex,
   rowHeight,
   svgWidth,
   columnWidth,
   todayColor,
   rtl,
-  setHoveredTaskId,
+  setHoveredIndex,
 }) => {
   let y = 0;
   const gridRows: ReactChild[] = [];
@@ -37,22 +37,18 @@ export const GridBody: React.FC<GridBodyProps> = ({
       className={styles.gridRowLineFirst}
     />,
   ];
-  for (const task of tasks) {
+  tasks.forEach((task, index) => {
     gridRows.push(
       <rect
-        onMouseMove={setHoveredTaskId(
-          Array.isArray(task) ? task?.[0]?.id : task.id
-        )}
-        onMouseLeave={setHoveredTaskId(null)}
+        onMouseMove={setHoveredIndex(index)}
+        onMouseLeave={setHoveredIndex(null)}
         key={"Row" + (Array.isArray(task) ? task[0].id : task.id)}
         x="0"
         y={y}
         width={svgWidth}
         height={rowHeight}
         className={
-          hoveredTaskId === (Array.isArray(task) ? task[0].id : task.id)
-            ? styles.gridRowHovered
-            : styles.gridRow
+          hoveredIndex === index ? styles.gridRowHovered : styles.gridRow
         }
       />
     );
@@ -67,7 +63,7 @@ export const GridBody: React.FC<GridBodyProps> = ({
       />
     );
     y += rowHeight;
-  }
+  });
 
   const now = new Date();
   let tickX = 0;

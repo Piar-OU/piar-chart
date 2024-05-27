@@ -25,8 +25,20 @@ export const convertToBarTasks = (
   let flattenedTasks: { task: Task; groupIndex: number }[] = tasks.flatMap(
     (task, i) => {
       return Array.isArray(task)
-        ? task.map(t => ({ task: t, groupIndex: i }))
-        : [{ task, groupIndex: i }];
+        ? task.map(t => ({
+            task: { ...t, start: new Date(t.start), end: new Date(t.end) },
+            groupIndex: i,
+          }))
+        : [
+            {
+              task: {
+                ...task,
+                start: new Date(task.start),
+                end: new Date(task.end),
+              },
+              groupIndex: i,
+            },
+          ];
     }
   );
 
