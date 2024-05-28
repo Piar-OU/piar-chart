@@ -53,28 +53,25 @@ const drownPathAndTriangle = (
   arrowIndent: number
 ) => {
   const indexCompare = taskFrom.index > taskTo.index ? -1 : 1;
-  const taskFromMiddleY = taskFrom.y + taskHeight / 2;
-  const taskToMiddleY = taskTo.y;
-  const taskToCenterX = taskTo.x1 + (taskTo.x2 - taskTo.x1) / 2;
+  const taskToEndPosition = taskTo.y + taskHeight / 2;
+  const taskFromEndPosition = taskFrom.x2 + arrowIndent * 2;
+  const taskFromHorizontalOffsetValue =
+    taskFromEndPosition < taskTo.x1 ? "" : `H ${taskTo.x1 - arrowIndent}`;
+  const taskToHorizontalOffsetValue =
+    taskFromEndPosition > taskTo.x1
+      ? arrowIndent
+      : taskTo.x1 - taskFrom.x2 - arrowIndent;
 
-  const isBottomToTop = taskFromMiddleY < taskToMiddleY;
-
-  const path = `M ${taskFrom.x2} ${taskFromMiddleY}
+  const path = `M ${taskFrom.x2} ${taskFrom.y + taskHeight / 2} 
   h ${arrowIndent} 
-  v ${(indexCompare * rowHeight) / 2}
-  H ${taskToCenterX}
-  V ${isBottomToTop ? taskToMiddleY : taskToMiddleY * 2 + 5}`;
+  v ${(indexCompare * rowHeight) / 2} 
+  ${taskFromHorizontalOffsetValue}
+  V ${taskToEndPosition} 
+  h ${taskToHorizontalOffsetValue}`;
 
-  const trianglePoints = `${taskToCenterX},${
-    isBottomToTop ? taskToMiddleY : taskToMiddleY * 2 + 5
-  } 
-  ${taskToCenterX - 5},${
-    isBottomToTop ? taskToMiddleY - 5 : (taskToMiddleY + 5) * 2 + 5
-  } 
-  ${taskToCenterX + 5},${
-    isBottomToTop ? taskToMiddleY - 5 : (taskToMiddleY + 5) * 2 + 5
-  }`;
-
+  const trianglePoints = `${taskTo.x1},${taskToEndPosition} 
+  ${taskTo.x1 - 5},${taskToEndPosition - 5} 
+  ${taskTo.x1 - 5},${taskToEndPosition + 5}`;
   return [path, trianglePoints];
 };
 
