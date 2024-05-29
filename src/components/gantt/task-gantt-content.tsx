@@ -16,6 +16,7 @@ export type TaskGanttContentProps = {
   fieldFiltering?: Record<string, any>;
   tasks: BarTask[];
   dates: Date[];
+  hoveredBarTaskId: string | null;
   viewMode: ViewMode;
   ganttEvent: GanttEvent;
   selectedTask: BarTask | undefined;
@@ -41,6 +42,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   fieldFiltering,
   dates,
   viewMode,
+  hoveredBarTaskId,
   ganttEvent,
   selectedTask,
   rowHeight,
@@ -67,6 +69,8 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   const [xStep, setXStep] = useState(0);
   const [initEventX1Delta, setInitEventX1Delta] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
+  const [project, setProject] = useState<number | null>(null);
+  const [selectedItem, setSelectedItem] = useState<BarTask | null>(null);
 
   const tasksMap = useMemo(
     () => new Map(tasks.map(task => [task.id, task])),
@@ -306,6 +310,8 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
             <TaskItem
               task={task}
               arrowIndent={arrowIndent}
+              hoveredBarTaskId={hoveredBarTaskId}
+              project={project}
               taskHeight={taskHeight}
               isProgressChangeable={!!onProgressChange && !task.isDisabled}
               isDateChangeable={!!onDateChange && !task.isDisabled}
@@ -313,19 +319,33 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               onEventStart={handleBarEventStart}
               key={task.id}
               viewMode={viewMode}
+              selectedItemProjectId={selectedItem?.projectId || null}
+              isSelectdItem={
+                !!selectedItem?.projectId &&
+                !!task.projectId &&
+                task.projectId === selectedItem.projectId
+              }
               isSelected={!!selectedTask && task.id === selectedTask.id}
               setHoveredBarTaskId={setHoveredBarTaskId}
+              setProject={setProject}
+              setSelectedItem={setSelectedItem}
               rtl={rtl}
             />
           );
         })}
       </g>
       <g className="arrows" fill={arrowColor} stroke={arrowColor}>
-        {tasks.map(task => {
+        {(project || selectedItem?.projectId ? tasks : []).map(task => {
           return task.barChildren.map(child => {
             const childTask = tasksMap.get(child.id);
 
-            if (!childTask) return null;
+            if (
+              !childTask ||
+              !task.projectId ||
+              (task.projectId !== project &&
+                task.projectId !== selectedItem?.projectId)
+            )
+              return null;
 
             return (
               <Arrow

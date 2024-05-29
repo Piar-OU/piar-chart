@@ -12,14 +12,20 @@ import { measureTextWidth } from "../../helpers/bar-helper";
 export type TaskItemProps = {
   task: BarTask;
   arrowIndent: number;
+  project: number | null;
   taskHeight: number;
+  selectedItemProjectId: number | null;
   isProgressChangeable: boolean;
+  hoveredBarTaskId: string | null;
   isDateChangeable: boolean;
   isDelete: boolean;
   isSelected: boolean;
+  isSelectdItem: boolean;
   viewMode: ViewMode;
   rtl: boolean;
   setHoveredBarTaskId: (value: React.SetStateAction<string | null>) => void;
+  setProject: (value: React.SetStateAction<number | null>) => void;
+  setSelectedItem: (value: React.SetStateAction<BarTask | null>) => void;
   onEventStart: (
     action: GanttContentMoveAction,
     selectedTask: BarTask,
@@ -30,18 +36,23 @@ export type TaskItemProps = {
 export const TaskItem: React.FC<TaskItemProps> = props => {
   const {
     task,
+    project,
+    selectedItemProjectId,
     arrowIndent,
+    hoveredBarTaskId,
     isDelete,
+    isSelectdItem,
     taskHeight,
     isSelected,
     viewMode,
+    setProject,
+    setSelectedItem,
     rtl,
     setHoveredBarTaskId,
     onEventStart,
   } = props;
   const textRef = useRef<SVGTextElement>(null);
   const [taskItem, setTaskItem] = useState<JSX.Element>(<div />);
-  const [isTextInside, setIsTextInside] = useState(true);
   const [truncatedName, setTruncatedName] = useState(task.name);
 
   useEffect(() => {
@@ -77,7 +88,6 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       const textWidth = measureTextWidth(task.name, font);
 
       const isTextInsideCalc = textWidth < maxWidth;
-      setIsTextInside(isTextInsideCalc);
       if (!isTextInsideCalc) {
         setTruncatedName(truncateText(task.name, (task.x2 - task.x1) * 0.8));
       } else {
@@ -89,9 +99,6 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   const getX = () => {
     const width = task.x2 - task.x1;
     const hasChild = task.barChildren.length > 0;
-    if (isTextInside) {
-      return task.x1 + width * 0.5;
-    }
     if (rtl && textRef.current) {
       return (
         task.x1 -
@@ -99,9 +106,9 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
         arrowIndent * +hasChild -
         arrowIndent * 0.2
       );
-    } else {
-      return task.x1 * 1.2;
     }
+
+    return task.x1 + width * 0.5;
   };
 
   const truncateText = (text: string, maxWidth: number) => {
@@ -109,16 +116,19 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     let truncated = text;
     const ellipsis = "...";
     const font = window.getComputedStyle(textRef.current).font;
-    let textWidth = measureTextWidth(task.name, font);
 
-    while (textWidth > maxWidth && truncated.length > 0) {
+    while (
+      measureTextWidth(truncated + ellipsis, font) > maxWidth &&
+      truncated.length > 0
+    ) {
       truncated = truncated.slice(0, -1);
-      textRef.current.textContent = truncated + ellipsis;
-      textWidth = measureTextWidth(task.name, font);
     }
 
     return truncated + ellipsis;
   };
+
+  const isHovered = hoveredBarTaskId === task.id;
+  const isSameProject = project === task.projectId;
 
   return (
     <g
@@ -134,16 +144,28 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       onMouseEnter={e => {
         onEventStart("mouseenter", task, e);
         setHoveredBarTaskId(task.id);
+        task.projectId && setProject(task.projectId);
       }}
       onMouseLeave={e => {
         onEventStart("mouseleave", task, e);
         setHoveredBarTaskId(null);
+        setProject(null);
       }}
       onDoubleClick={e => {
         onEventStart("dblclick", task, e);
       }}
       onClick={e => {
         onEventStart("click", task, e);
+        if (
+          selectedItemProjectId &&
+          task.projectId &&
+          selectedItemProjectId === task.projectId
+        ) {
+          setSelectedItem(null);
+          return;
+        }
+
+        setSelectedItem(task);
       }}
       onFocus={() => {
         onEventStart("select", task);
@@ -158,6 +180,15 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       >
         {truncatedName}
       </text>
+      {(isHovered || isSameProject || isSelectdItem) && (
+        <rect
+          x={task.x1}
+          y={task.y}
+          width={task.x2 - task.x1}
+          height={task.height}
+          className={style.mask}
+        />
+      )}
     </g>
   );
 };

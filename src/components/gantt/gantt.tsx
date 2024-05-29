@@ -496,6 +496,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     dates: dateSetup.dates,
     ganttEvent,
     selectedTask,
+    hoveredBarTaskId,
     viewMode,
     rowHeight,
     taskHeight,
