@@ -41,3 +41,16 @@
   stroke-width: 2;
   pointer-events: none;
 }
+
+.selectedMask {
+  fill: rgba(0, 100, 0, 0.5);
+  stroke: #52c41a;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.border {
+  fill: rgba(0, 0, 0, 0);
+  stroke: #8c8c8c;
+  stroke-width: 2;
+}

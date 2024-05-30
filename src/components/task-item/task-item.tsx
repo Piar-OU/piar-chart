@@ -11,10 +11,10 @@ import { measureTextWidth } from "../../helpers/bar-helper";
 
 export type TaskItemProps = {
   task: BarTask;
+  selectedItemsIdSet: Set<string>;
   arrowIndent: number;
   project: number | null;
   taskHeight: number;
-  selectedItemProjectId: number | null;
   isProgressChangeable: boolean;
   hoveredBarTaskId: string | null;
   isDateChangeable: boolean;
@@ -36,8 +36,8 @@ export type TaskItemProps = {
 export const TaskItem: React.FC<TaskItemProps> = props => {
   const {
     task,
+    selectedItemsIdSet,
     project,
-    selectedItemProjectId,
     arrowIndent,
     hoveredBarTaskId,
     isDelete,
@@ -156,15 +156,12 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       }}
       onClick={e => {
         onEventStart("click", task, e);
-        if (
-          selectedItemProjectId &&
-          task.projectId &&
-          selectedItemProjectId === task.projectId
-        ) {
+        if (selectedItemsIdSet.has(task.id)) {
           setSelectedItem(null);
           return;
         }
 
+        if (!task.projectId) return;
         setSelectedItem(task);
       }}
       onFocus={() => {
@@ -180,13 +177,26 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       >
         {truncatedName}
       </text>
+      <rect
+        x={task.x1}
+        y={task.y}
+        ry={task.barCornerRadius}
+        rx={task.barCornerRadius}
+        width={task.x2 - task.x1}
+        height={task.height}
+        className={style.border}
+      />
       {(isHovered || isSameProject || isSelectdItem) && (
         <rect
           x={task.x1}
           y={task.y}
+          ry={task.barCornerRadius}
+          rx={task.barCornerRadius}
           width={task.x2 - task.x1}
           height={task.height}
-          className={style.mask}
+          className={
+            selectedItemsIdSet.has(task.id) ? style.selectedMask : style.mask
+          }
         />
       )}
     </g>

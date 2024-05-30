@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { EventOption, Task, ViewMode } from "../../types/public-types";
 import { BarTask } from "../../types/bar-task";
 import { Arrow } from "../other/arrow";
@@ -302,6 +302,67 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     }
   };
 
+  const getArrows = () => {
+    const arrowElements = (
+      project || selectedItem?.projectId ? tasks : []
+    ).reduce(
+      (acc, task) => {
+        task.barChildren.forEach(child => {
+          const childTask = tasksMap.get(child.id);
+
+          if (
+            !childTask ||
+            !task.projectId ||
+            (task.projectId !== project &&
+              task.projectId !== selectedItem?.projectId)
+          )
+            return;
+
+          const arrowElement = (
+            <Arrow
+              key={`Arrow from ${task.id} to ${childTask.id}`}
+              taskFrom={task}
+              selectedItem={selectedItem}
+              taskTo={childTask}
+              rowHeight={rowHeight}
+              taskHeight={taskHeight}
+              arrowIndent={arrowIndent}
+              rtl={rtl}
+            />
+          );
+
+          if (selectedItem && task.id === selectedItem.id) {
+            acc.selected.push(arrowElement);
+          } else {
+            acc.normal.push(arrowElement);
+          }
+        });
+
+        return acc;
+      },
+      { normal: [] as React.ReactNode[], selected: [] as React.ReactNode[] }
+    );
+
+    return [...arrowElements.normal, ...arrowElements.selected];
+  };
+
+  const getSelectedItemsIdSet = useCallback(() => {
+    if (!selectedItem) return new Set() as Set<string>;
+
+    const selectedItemsIdSet = new Set();
+
+    selectedItemsIdSet.add(selectedItem.id);
+
+    selectedItem.barChildren.forEach(child => selectedItemsIdSet.add(child.id));
+
+    return selectedItemsIdSet as Set<string>;
+  }, [selectedItem]);
+
+  const selectedItemsIdSet = useMemo(
+    () => getSelectedItemsIdSet(),
+    [getSelectedItemsIdSet]
+  );
+
   return (
     <g className="content">
       <g className="bar" fontFamily={fontFamily} fontSize={fontSize}>
@@ -309,6 +370,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
           return (
             <TaskItem
               task={task}
+              selectedItemsIdSet={selectedItemsIdSet}
               arrowIndent={arrowIndent}
               hoveredBarTaskId={hoveredBarTaskId}
               project={project}
@@ -319,7 +381,6 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               onEventStart={handleBarEventStart}
               key={task.id}
               viewMode={viewMode}
-              selectedItemProjectId={selectedItem?.projectId || null}
               isSelectdItem={
                 !!selectedItem?.projectId &&
                 !!task.projectId &&
@@ -335,31 +396,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
         })}
       </g>
       <g className="arrows" fill={arrowColor} stroke={arrowColor}>
-        {(project || selectedItem?.projectId ? tasks : []).map(task => {
-          return task.barChildren.map(child => {
-            const childTask = tasksMap.get(child.id);
-
-            if (
-              !childTask ||
-              !task.projectId ||
-              (task.projectId !== project &&
-                task.projectId !== selectedItem?.projectId)
-            )
-              return null;
-
-            return (
-              <Arrow
-                key={`Arrow from ${task.id} to ${childTask.id}`}
-                taskFrom={task}
-                taskTo={childTask}
-                rowHeight={rowHeight}
-                taskHeight={taskHeight}
-                arrowIndent={arrowIndent}
-                rtl={rtl}
-              />
-            );
-          });
-        })}
+        {getArrows()}
       </g>
     </g>
   );

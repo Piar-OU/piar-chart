@@ -3,6 +3,7 @@ import { BarTask } from "../../types/bar-task";
 
 type ArrowProps = {
   taskFrom: BarTask;
+  selectedItem: BarTask | null;
   taskTo: BarTask;
   rowHeight: number;
   taskHeight: number;
@@ -11,6 +12,7 @@ type ArrowProps = {
 };
 export const Arrow: React.FC<ArrowProps> = ({
   taskFrom,
+  selectedItem,
   taskTo,
   rowHeight,
   taskHeight,
@@ -37,10 +39,12 @@ export const Arrow: React.FC<ArrowProps> = ({
     );
   }
 
+  const isSelectedItem = !!selectedItem && taskFrom.id === selectedItem.id;
+  const color = isSelectedItem ? "#52c41a" : "inherit";
   return (
     <g className="arrow">
-      <path strokeWidth="1.5" d={path} fill="none" />
-      <polygon points={trianglePoints} />
+      <path strokeWidth="1.5" d={path} fill="none" stroke={color} />
+      <polygon points={trianglePoints} stroke={color} fill={color} />
     </g>
   );
 };
