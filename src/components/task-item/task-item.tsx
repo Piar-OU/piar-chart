@@ -7,12 +7,14 @@ import { Milestone } from "./milestone/milestone";
 import { Project } from "./project/project";
 import style from "./task-list.module.css";
 import { ViewMode } from "../../types/public-types";
-import { measureTextWidth } from "../../helpers/bar-helper";
+import { getProgressPoint, measureTextWidth } from "../../helpers/bar-helper";
+import { BarProgressHandle } from "./bar/bar-progress-handle";
 
 export type TaskItemProps = {
   task: BarTask;
   selectedItemsIdSet: Set<string>;
   arrowIndent: number;
+  action: GanttContentMoveAction;
   project: number | null;
   taskHeight: number;
   isProgressChangeable: boolean;
@@ -39,7 +41,10 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     selectedItemsIdSet,
     project,
     arrowIndent,
+    action,
     hoveredBarTaskId,
+    isDateChangeable,
+    isProgressChangeable,
     isDelete,
     isSelectdItem,
     taskHeight,
@@ -130,63 +135,65 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   const isHovered = hoveredBarTaskId === task.id;
   const isSameProject = project === task.projectId;
 
-  return (
-    <g
-      onKeyDown={e => {
-        switch (e.key) {
-          case "Delete": {
-            if (isDelete) onEventStart("delete", task, e);
-            break;
-          }
-        }
-        e.stopPropagation();
-      }}
-      onMouseEnter={e => {
-        onEventStart("mouseenter", task, e);
-        setHoveredBarTaskId(task.id);
-        task.projectId && setProject(task.projectId);
-      }}
-      onMouseLeave={e => {
-        onEventStart("mouseleave", task, e);
-        setHoveredBarTaskId(null);
-        setProject(null);
-      }}
-      onDoubleClick={e => {
-        onEventStart("dblclick", task, e);
-      }}
-      onClick={e => {
-        onEventStart("click", task, e);
-        if (selectedItemsIdSet.has(task.id)) {
-          setSelectedItem(null);
-          return;
-        }
+  const progressPoint = getProgressPoint(
+    +!rtl * task.progressWidth + task.progressX,
+    task.y,
+    task.height
+  );
 
-        if (!task.projectId) return;
-        setSelectedItem(task);
-      }}
-      onFocus={() => {
-        onEventStart("select", task);
-      }}
-    >
-      {taskItem}
-      <text
-        x={getX()}
-        y={task.y + taskHeight * 0.5}
-        className={style.barLabel}
-        ref={textRef}
+  return (
+    <g className={style.barWrapper} tabIndex={0}>
+      <g
+        onKeyDown={e => {
+          switch (e.key) {
+            case "Delete": {
+              if (isDelete) onEventStart("delete", task, e);
+              break;
+            }
+          }
+          e.stopPropagation();
+        }}
+        onMouseEnter={e => {
+          onEventStart("mouseenter", task, e);
+          setHoveredBarTaskId(task.id);
+          task.projectId && setProject(task.projectId);
+        }}
+        onMouseLeave={e => {
+          if (action === "move") return;
+          onEventStart("mouseleave", task, e);
+          setHoveredBarTaskId(null);
+          setProject(null);
+        }}
+        onDoubleClick={e => {
+          onEventStart("dblclick", task, e);
+        }}
+        onClick={e => {
+          onEventStart("click", task, e);
+          if (selectedItemsIdSet.has(task.id)) {
+            setSelectedItem(null);
+            return;
+          }
+
+          if (!task.projectId) return;
+          setSelectedItem(task);
+        }}
+        onFocus={() => {
+          onEventStart("select", task);
+        }}
+        onMouseDown={e => {
+          if (!isDateChangeable) return;
+          onEventStart("move", task, e);
+        }}
       >
-        {truncatedName}
-      </text>
-      <rect
-        x={task.x1}
-        y={task.y}
-        ry={task.barCornerRadius}
-        rx={task.barCornerRadius}
-        width={task.x2 - task.x1}
-        height={task.height}
-        className={style.border}
-      />
-      {(isHovered || isSameProject || isSelectdItem) && (
+        {taskItem}
+        <text
+          x={getX()}
+          y={task.y + taskHeight * 0.5}
+          className={style.barLabel}
+          ref={textRef}
+        >
+          {truncatedName}
+        </text>
         <rect
           x={task.x1}
           y={task.y}
@@ -194,11 +201,35 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           rx={task.barCornerRadius}
           width={task.x2 - task.x1}
           height={task.height}
-          className={
-            selectedItemsIdSet.has(task.id) ? style.selectedMask : style.mask
-          }
+          className={style.border}
         />
-      )}
+        {(isHovered || isSameProject || isSelectdItem) &&
+          action !== "progress" && (
+            <rect
+              x={task.x1}
+              y={task.y}
+              ry={task.barCornerRadius}
+              rx={task.barCornerRadius}
+              width={task.x2 - task.x1}
+              height={task.height}
+              className={
+                selectedItemsIdSet.has(task.id)
+                  ? style.selectedMask
+                  : style.mask
+              }
+            />
+          )}
+      </g>
+      <g className="handleGroup">
+        {isProgressChangeable && action !== "move" && (
+          <BarProgressHandle
+            progressPoint={progressPoint}
+            onMouseDown={e => {
+              onEventStart("progress", task, e);
+            }}
+          />
+        )}
+      </g>
     </g>
   );
 };

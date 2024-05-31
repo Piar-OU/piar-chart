@@ -1,5 +1,5 @@
 import React from "react";
-import style from "./bar.module.css";
+import style from "../task-list.module.css";
 
 type BarDisplayProps = {
   x: number;
@@ -17,7 +17,6 @@ type BarDisplayProps = {
     progressColor: string;
     progressSelectedColor: string;
   };
-  onMouseDown: (event: React.MouseEvent<SVGPolygonElement, MouseEvent>) => void;
 };
 export const BarDisplay: React.FC<BarDisplayProps> = ({
   x,
@@ -29,7 +28,6 @@ export const BarDisplay: React.FC<BarDisplayProps> = ({
   progressWidth,
   barCornerRadius,
   styles,
-  onMouseDown,
 }) => {
   const getProcessColor = () => {
     return isSelected ? styles.progressSelectedColor : styles.progressColor;
@@ -40,7 +38,7 @@ export const BarDisplay: React.FC<BarDisplayProps> = ({
   };
 
   return (
-    <g onMouseDown={onMouseDown}>
+    <g>
       <rect
         x={x}
         width={width}

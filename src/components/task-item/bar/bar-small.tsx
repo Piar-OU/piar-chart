@@ -3,12 +3,11 @@ import { getProgressPoint } from "../../../helpers/bar-helper";
 import { BarDisplay } from "./bar-display";
 import { BarProgressHandle } from "./bar-progress-handle";
 import { TaskItemProps } from "../task-item";
-import styles from "./bar.module.css";
+import styles from "../task-list.module.css";
 
 export const BarSmall: React.FC<TaskItemProps> = ({
   task,
   isProgressChangeable,
-  isDateChangeable,
   onEventStart,
   isSelected,
 }) => {
@@ -29,9 +28,6 @@ export const BarSmall: React.FC<TaskItemProps> = ({
         barCornerRadius={task.barCornerRadius}
         styles={task.styles}
         isSelected={isSelected}
-        onMouseDown={e => {
-          isDateChangeable && onEventStart("move", task, e);
-        }}
       />
       <g className="handleGroup">
         {isProgressChangeable && (

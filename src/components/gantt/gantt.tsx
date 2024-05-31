@@ -465,8 +465,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
       onExpanderClick({ ...task, hideChildren: !task.hideChildren });
     }
   };
-  const handleHoveredTask = (index: number | null) => () =>
+  const handleHoveredTask = (index: number | null) => () => {
+    if (ganttEvent.action === "move") return;
     setHoveredIndex(index);
+  };
 
   const gridProps: GridProps = {
     columnWidth,

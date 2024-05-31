@@ -39,18 +39,38 @@
   fill: rgba(0, 0, 0, 0.5);
   stroke: #000;
   stroke-width: 2;
-  pointer-events: none;
 }
 
 .selectedMask {
   fill: rgba(0, 100, 0, 0.5);
   stroke: #52c41a;
   stroke-width: 2;
-  pointer-events: none;
 }
 
 .border {
   fill: rgba(0, 0, 0, 0);
   stroke: #8c8c8c;
   stroke-width: 2;
+}
+
+.barWrapper {
+  cursor: pointer;
+  outline: none;
+}
+
+.barWrapper:hover .barHandle {
+  visibility: visible;
+  opacity: 1;
+}
+
+.barHandle {
+  fill: #ddd;
+  cursor: ew-resize;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.barBackground {
+  user-select: none;
+  stroke-width: 0;
 }
