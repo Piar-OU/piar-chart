@@ -17,14 +17,9 @@ export type TaskItemProps = {
   action: GanttContentMoveAction;
   project: number | null;
   taskHeight: number;
-  draggingFromTop: boolean;
   isProgressChangeable: boolean;
   hoveredBarTaskId: string | null;
   isDateChangeable: boolean;
-  mousePosition: {
-    x: number;
-    y: number;
-  };
   isDelete: boolean;
   isSelected: boolean;
   mainTask: BarTask | null;
@@ -59,13 +54,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     project,
     mainTask,
     childTask,
-    draggingFromTop,
     arrowIndent,
     action,
     hoveredBarTaskId,
     isDateChangeable,
     isProgressChangeable,
-    mousePosition,
     isDelete,
     isSelectdItem,
     taskHeight,
@@ -174,9 +167,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     const rowsElement = document.querySelector(".rows");
     if (rowsElement) {
       const rowsRect = rowsElement.getBoundingClientRect();
+      const xPosition = e.clientX - rowsRect.left;
+      const yPosition = e.clientY - rowsRect.top;
       setMousePosition({
-        x: e.clientX - rowsRect.left + getX(),
-        y: e.clientY - rowsRect.top,
+        x: xPosition,
+        y: yPosition,
       });
     }
     document.body.style.cursor = "grabbing";
@@ -188,9 +183,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     const rowsElement = document.querySelector(".rows");
     if (rowsElement) {
       const rowsRect = rowsElement.getBoundingClientRect();
+      const xPosition = e.clientX - rowsRect.left;
+      const yPosition = e.clientY - rowsRect.top;
       setMousePosition({
-        x: e.clientX - rowsRect.left + getX(),
-        y: e.clientY - rowsRect.top,
+        x: xPosition,
+        y: yPosition,
       });
     }
   };
@@ -207,19 +204,6 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
 
   return (
     <g className={style.barWrapper} tabIndex={0}>
-      <defs>
-        <marker
-          id="arrow"
-          markerWidth="10"
-          markerHeight="10"
-          refX="5"
-          refY="5"
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d="M0,0 L0,10 L10,5 Z" fill="black" />
-        </marker>
-      </defs>
       <g
         onKeyDown={e => {
           switch (e.key) {
@@ -320,7 +304,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       </g>
       {!task.isDisabled && (
         <circle
-          cx={getX()}
+          cx={task.x1 + 3}
           cy={task.y - 6}
           r={4}
           fill={isMainTask ? "#95de64" : isChildTask ? "#ffd666" : "#ffffff"}
@@ -341,7 +325,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       )}
       {!task.isDisabled && (
         <circle
-          cx={getX()}
+          cx={task.x2 - 3}
           cy={task.y + task.height + 6}
           r={4}
           fill={isMainTask ? "#95de64" : isChildTask ? "#ffd666" : "#ffffff"}
@@ -358,17 +342,6 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
             if (mainTask.id === task.id) return;
             setChildTask(null);
           }}
-        />
-      )}
-      {isMainTask && (
-        <line
-          x1={getX()}
-          y1={task.y + (draggingFromTop ? -6 : task.height + 6)}
-          x2={mousePosition.x - getX()}
-          y2={mousePosition.y}
-          stroke="black"
-          strokeDasharray="4"
-          markerEnd="url(#arrow)"
         />
       )}
     </g>

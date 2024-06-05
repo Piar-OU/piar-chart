@@ -67,6 +67,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   onExpanderClick,
   onArrowClick,
   onDependency,
+  trigger,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
@@ -157,6 +158,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     rtl,
     scrollX,
     onExpanderClick,
+    trigger,
   ]);
 
   useEffect(() => {
@@ -282,14 +284,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         }))
       );
 
-      const barTasksMap = new Map(barTasks.map(task => [task.id, task]));
-
-      const hoveredBarTask =
-        hoveredBarTaskId && barTasksMap.get(hoveredBarTaskId);
-
-      hoveredBarTask
-        ? setGanttEvent({ action: "mouseenter", changedTask: hoveredBarTask })
-        : setGanttEvent({ action: "" });
+      setGanttEvent({ action: "" });
     }
   }, [
     ganttEvent,

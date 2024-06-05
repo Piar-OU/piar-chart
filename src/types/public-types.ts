@@ -147,4 +147,5 @@ export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   fieldFiltering?: Record<string, any>;
   onArrowClick?: (taskFrom: Task, taskTo: Task) => void;
   onDependency?: (taskFrom: Task, taskTo: Task) => void;
+  trigger?: boolean;
 }

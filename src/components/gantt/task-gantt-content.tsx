@@ -407,15 +407,6 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     return [...arrowElements.normal, ...arrowElements.selected];
   };
 
-  const getX = () => {
-    if (!mainTask) return;
-    const width = mainTask.x2 - mainTask.x1;
-
-    return mainTask.x1 + width * 0.5;
-  };
-
-  const x = getX();
-
   useEffect(() => {
     if (!isDependency) return;
     if (!mainTask || !childTask || !onDependency) {
@@ -463,11 +454,9 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               isDelete={!task.isDisabled}
               onEventStart={handleBarEventStart}
               key={task.id}
-              draggingFromTop={draggingFromTop}
               viewMode={viewMode}
               mainTask={mainTask}
               childTask={childTask}
-              mousePosition={mousePosition}
               setMousePosition={setMousePosition}
               isSelectdItem={
                 !!selectedItem?.projectId &&
@@ -490,11 +479,13 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       <g className="arrows" fill={arrowColor} stroke={arrowColor}>
         {getArrows()}
       </g>
-      {mainTask && x && (
+      {mainTask && (
         <line
-          x1={x}
-          y1={mainTask.y + (draggingFromTop ? -6 : mainTask.height + 6)}
-          x2={mousePosition.x - x}
+          x1={draggingFromTop ? mainTask.x1 + 3 : mainTask.x2 - 3}
+          y1={
+            draggingFromTop ? mainTask.y - 6 : mainTask.y + mainTask.height + 6
+          }
+          x2={mousePosition.x}
           y2={mousePosition.y}
           stroke="black"
           strokeDasharray="4"

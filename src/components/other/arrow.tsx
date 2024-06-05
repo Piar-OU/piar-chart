@@ -81,9 +81,11 @@ const drownPathAndTriangle = (
       ? arrowIndent
       : taskTo.x1 - taskFrom.x2 - arrowIndent;
 
+  const isSameRow = taskFrom.y === taskTo.y;
+
   const path = `M ${taskFrom.x2} ${taskFrom.y + taskHeight / 2} 
   h ${arrowIndent} 
-  v ${(indexCompare * rowHeight) / 2} 
+  v ${isSameRow ? 0 : (indexCompare * rowHeight) / 2} 
   ${taskFromHorizontalOffsetValue}
   V ${taskToEndPosition} 
   h ${taskToHorizontalOffsetValue}`;
