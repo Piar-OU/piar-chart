@@ -1,6 +1,6 @@
 {
   "name": "piar-chart",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Chart for React with TypeScript.",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",

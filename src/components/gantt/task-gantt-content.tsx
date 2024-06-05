@@ -35,6 +35,8 @@ export type TaskGanttContentProps = {
   setFailedTask: (value: BarTask | null) => void;
   setSelectedTask: (taskId: string) => void;
   setHoveredBarTaskId: (value: React.SetStateAction<string | null>) => void;
+  onArrowClick?: (taskFrom: Task, taskTo: Task) => void;
+  onDependency?: (taskFrom: Task, taskTo: Task) => void;
 } & EventOption;
 
 export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
@@ -64,6 +66,8 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   onDoubleClick,
   onClick,
   onDelete,
+  onArrowClick,
+  onDependency,
 }) => {
   const point = svg?.current?.createSVGPoint();
   const [xStep, setXStep] = useState(0);
@@ -71,6 +75,11 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   const [isMoving, setIsMoving] = useState(false);
   const [project, setProject] = useState<number | null>(null);
   const [selectedItem, setSelectedItem] = useState<BarTask | null>(null);
+  const [mainTask, setMainTask] = useState<BarTask | null>(null);
+  const [childTask, setChildTask] = useState<BarTask | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [draggingFromTop, setDraggingFromTop] = useState(false);
+  const [isDependency, setIsDependency] = useState(false);
 
   const tasksMap = useMemo(
     () => new Map(tasks.map(task => [task.id, task])),
@@ -379,6 +388,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               taskHeight={taskHeight}
               arrowIndent={arrowIndent}
               rtl={rtl}
+              onArrowClick={onArrowClick}
             />
           );
 
@@ -397,8 +407,46 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     return [...arrowElements.normal, ...arrowElements.selected];
   };
 
+  const getX = () => {
+    if (!mainTask) return;
+    const width = mainTask.x2 - mainTask.x1;
+
+    return mainTask.x1 + width * 0.5;
+  };
+
+  const x = getX();
+
+  useEffect(() => {
+    if (!isDependency) return;
+    if (!mainTask || !childTask || !onDependency) {
+      setMainTask(null);
+      setChildTask(null);
+      setIsDependency(false);
+      return;
+    }
+
+    onDependency(mainTask, childTask);
+
+    setMainTask(null);
+    setChildTask(null);
+    setIsDependency(false);
+  }, [childTask, isDependency, mainTask, onDependency]);
+
   return (
     <g className="content">
+      <defs>
+        <marker
+          id="arrow"
+          markerWidth="10"
+          markerHeight="10"
+          refX="5"
+          refY="5"
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,0 L0,10 L10,5 Z" fill="black" />
+        </marker>
+      </defs>
       <g className="bar" fontFamily={fontFamily} fontSize={fontSize}>
         {tasks.map(task => {
           return (
@@ -415,7 +463,12 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               isDelete={!task.isDisabled}
               onEventStart={handleBarEventStart}
               key={task.id}
+              draggingFromTop={draggingFromTop}
               viewMode={viewMode}
+              mainTask={mainTask}
+              childTask={childTask}
+              mousePosition={mousePosition}
+              setMousePosition={setMousePosition}
               isSelectdItem={
                 !!selectedItem?.projectId &&
                 !!task.projectId &&
@@ -425,6 +478,10 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               setHoveredBarTaskId={setHoveredBarTaskId}
               setProject={setProject}
               setSelectedItem={setSelectedItem}
+              setMainTask={setMainTask}
+              setDraggingFromTop={setDraggingFromTop}
+              setChildTask={setChildTask}
+              setIsDependency={setIsDependency}
               rtl={rtl}
             />
           );
@@ -433,6 +490,17 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       <g className="arrows" fill={arrowColor} stroke={arrowColor}>
         {getArrows()}
       </g>
+      {mainTask && x && (
+        <line
+          x1={x}
+          y1={mainTask.y + (draggingFromTop ? -6 : mainTask.height + 6)}
+          x2={mousePosition.x - x}
+          y2={mousePosition.y}
+          stroke="black"
+          strokeDasharray="4"
+          markerEnd="url(#arrow)"
+        />
+      )}
     </g>
   );
 };

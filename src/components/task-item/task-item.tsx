@@ -17,17 +17,34 @@ export type TaskItemProps = {
   action: GanttContentMoveAction;
   project: number | null;
   taskHeight: number;
+  draggingFromTop: boolean;
   isProgressChangeable: boolean;
   hoveredBarTaskId: string | null;
   isDateChangeable: boolean;
+  mousePosition: {
+    x: number;
+    y: number;
+  };
   isDelete: boolean;
   isSelected: boolean;
+  mainTask: BarTask | null;
+  childTask: BarTask | null;
   isSelectdItem: boolean;
   viewMode: ViewMode;
   rtl: boolean;
   setHoveredBarTaskId: (value: React.SetStateAction<string | null>) => void;
   setProject: (value: React.SetStateAction<number | null>) => void;
   setSelectedItem: (value: React.SetStateAction<BarTask | null>) => void;
+  setMainTask: (value: React.SetStateAction<BarTask | null>) => void;
+  setChildTask: (value: React.SetStateAction<BarTask | null>) => void;
+  setDraggingFromTop: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsDependency: React.Dispatch<React.SetStateAction<boolean>>;
+  setMousePosition: React.Dispatch<
+    React.SetStateAction<{
+      x: number;
+      y: number;
+    }>
+  >;
   onEventStart: (
     action: GanttContentMoveAction,
     selectedTask: BarTask,
@@ -40,11 +57,15 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     task,
     selectedItemsIdSet,
     project,
+    mainTask,
+    childTask,
+    draggingFromTop,
     arrowIndent,
     action,
     hoveredBarTaskId,
     isDateChangeable,
     isProgressChangeable,
+    mousePosition,
     isDelete,
     isSelectdItem,
     taskHeight,
@@ -52,8 +73,13 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     viewMode,
     setProject,
     setSelectedItem,
+    setMainTask,
+    setChildTask,
     rtl,
     setHoveredBarTaskId,
+    setDraggingFromTop,
+    setMousePosition,
+    setIsDependency,
     onEventStart,
   } = props;
   const textRef = useRef<SVGTextElement>(null);
@@ -141,8 +167,59 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     task.height
   );
 
+  const handleMouseDown = (e: React.MouseEvent, isTop: boolean) => {
+    e.preventDefault();
+    setMainTask(task);
+    setDraggingFromTop(isTop);
+    const rowsElement = document.querySelector(".rows");
+    if (rowsElement) {
+      const rowsRect = rowsElement.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rowsRect.left + getX(),
+        y: e.clientY - rowsRect.top,
+      });
+    }
+    document.body.style.cursor = "grabbing";
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    const rowsElement = document.querySelector(".rows");
+    if (rowsElement) {
+      const rowsRect = rowsElement.getBoundingClientRect();
+      setMousePosition({
+        x: e.clientX - rowsRect.left + getX(),
+        y: e.clientY - rowsRect.top,
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDependency(true);
+    document.body.style.cursor = "auto";
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
+
+  const isMainTask = mainTask?.id === task.id;
+  const isChildTask = childTask?.id === task.id;
+
   return (
     <g className={style.barWrapper} tabIndex={0}>
+      <defs>
+        <marker
+          id="arrow"
+          markerWidth="10"
+          markerHeight="10"
+          refX="5"
+          refY="5"
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,0 L0,10 L10,5 Z" fill="black" />
+        </marker>
+      </defs>
       <g
         onKeyDown={e => {
           switch (e.key) {
@@ -154,11 +231,21 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           e.stopPropagation();
         }}
         onMouseEnter={e => {
+          if (mainTask && !task.isDisabled) {
+            if (mainTask.id === task.id) return;
+            setChildTask(task);
+            return;
+          }
           onEventStart("mouseenter", task, e);
           setHoveredBarTaskId(task.id);
           task.projectId && setProject(task.projectId);
         }}
         onMouseLeave={e => {
+          if (mainTask && !task.isDisabled) {
+            if (mainTask.id === task.id) return;
+            setChildTask(null);
+            return;
+          }
           if (action === "move") return;
           onEventStart("mouseleave", task, e);
           setHoveredBarTaskId(null);
@@ -220,6 +307,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
             />
           )}
       </g>
+
       <g className="handleGroup">
         {isProgressChangeable && action !== "move" && (
           <BarProgressHandle
@@ -230,6 +318,59 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           />
         )}
       </g>
+      {!task.isDisabled && (
+        <circle
+          cx={getX()}
+          cy={task.y - 6}
+          r={4}
+          fill={isMainTask ? "#95de64" : isChildTask ? "#ffd666" : "#ffffff"}
+          stroke="#8c8c8c"
+          strokeWidth={1}
+          onMouseDown={e => handleMouseDown(e, true)}
+          onMouseEnter={() => {
+            if (!mainTask) return;
+            if (mainTask.id === task.id) return;
+            setChildTask(task);
+          }}
+          onMouseLeave={() => {
+            if (!mainTask) return;
+            if (mainTask.id === task.id) return;
+            setChildTask(null);
+          }}
+        />
+      )}
+      {!task.isDisabled && (
+        <circle
+          cx={getX()}
+          cy={task.y + task.height + 6}
+          r={4}
+          fill={isMainTask ? "#95de64" : isChildTask ? "#ffd666" : "#ffffff"}
+          stroke="#8c8c8c"
+          strokeWidth={1}
+          onMouseDown={e => handleMouseDown(e, false)}
+          onMouseEnter={() => {
+            if (!mainTask) return;
+            if (mainTask.id === task.id) return;
+            setChildTask(task);
+          }}
+          onMouseLeave={() => {
+            if (!mainTask) return;
+            if (mainTask.id === task.id) return;
+            setChildTask(null);
+          }}
+        />
+      )}
+      {isMainTask && (
+        <line
+          x1={getX()}
+          y1={task.y + (draggingFromTop ? -6 : task.height + 6)}
+          x2={mousePosition.x - getX()}
+          y2={mousePosition.y}
+          stroke="black"
+          strokeDasharray="4"
+          markerEnd="url(#arrow)"
+        />
+      )}
     </g>
   );
 };

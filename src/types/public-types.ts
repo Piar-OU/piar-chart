@@ -145,4 +145,6 @@ export interface StylingOption {
 export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   tasks: (Task | Task[])[];
   fieldFiltering?: Record<string, any>;
+  onArrowClick?: (taskFrom: Task, taskTo: Task) => void;
+  onDependency?: (taskFrom: Task, taskTo: Task) => void;
 }

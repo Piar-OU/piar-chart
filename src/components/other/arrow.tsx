@@ -1,5 +1,6 @@
 import React from "react";
 import { BarTask } from "../../types/bar-task";
+import { Task } from "../../types/public-types";
 
 type ArrowProps = {
   taskFrom: BarTask;
@@ -9,6 +10,7 @@ type ArrowProps = {
   taskHeight: number;
   arrowIndent: number;
   rtl: boolean;
+  onArrowClick?: (taskFrom: Task, taskTo: Task) => void;
 };
 export const Arrow: React.FC<ArrowProps> = ({
   taskFrom,
@@ -18,6 +20,7 @@ export const Arrow: React.FC<ArrowProps> = ({
   taskHeight,
   arrowIndent,
   rtl,
+  onArrowClick,
 }) => {
   let path: string;
   let trianglePoints: string;
@@ -41,8 +44,21 @@ export const Arrow: React.FC<ArrowProps> = ({
 
   const color = isSelectedItem ? "#52c41a" : "inherit";
   return (
-    <g className="arrow">
-      <path strokeWidth="1.5" d={path} fill="none" stroke={color} />
+    <g
+      className="arrow"
+      onClick={() => {
+        if (!isSelectedItem) return;
+
+        onArrowClick?.(taskFrom, taskTo);
+      }}
+      cursor={isSelectedItem ? "pointer" : "default"}
+    >
+      <path
+        strokeWidth={isSelectedItem ? "2" : "1.5"}
+        d={path}
+        fill="none"
+        stroke={color}
+      />
       <polygon points={trianglePoints} stroke={color} fill={color} />
     </g>
   );
