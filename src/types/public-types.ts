@@ -148,4 +148,5 @@ export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   onArrowClick?: (taskFrom: Task, taskTo: Task) => void;
   onDependency?: (taskFrom: Task, taskTo: Task) => void;
   trigger?: boolean;
+  isLoading?: boolean;
 }

@@ -12,6 +12,7 @@ export type TaskGanttProps = {
   barProps: TaskGanttContentProps;
   ganttHeight: number;
   viewMode: ViewMode;
+  isLoading?: boolean;
   columnWidth: number;
   scrollY: number;
   scrollX: number;
@@ -27,6 +28,7 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   scrollY,
   scrollX,
   dates,
+  isLoading,
 }) => {
   const ganttSVGRef = useRef<SVGSVGElement>(null);
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
@@ -102,6 +104,15 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
               strokeWidth={2}
               strokeDasharray="8 8"
             />
+          )}
+          {isLoading && (
+            <g>
+              <rect
+                fill="rgba(0, 0, 0, 0.7)"
+                width={gridProps.svgWidth}
+                height={barProps.rowHeight * barProps.uneducatedTasks.length}
+              />
+            </g>
           )}
         </svg>
       </div>

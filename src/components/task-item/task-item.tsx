@@ -215,6 +215,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           e.stopPropagation();
         }}
         onMouseEnter={e => {
+          if (task.isDisabled) return;
           if (mainTask && !task.isDisabled) {
             if (mainTask.id === task.id) return;
             setChildTask(task);
@@ -225,6 +226,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           task.projectId && setProject(task.projectId);
         }}
         onMouseLeave={e => {
+          if (task.isDisabled) return;
           if (mainTask && !task.isDisabled) {
             if (mainTask.id === task.id) return;
             setChildTask(null);
@@ -236,9 +238,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           setProject(null);
         }}
         onDoubleClick={e => {
+          if (task.isDisabled) return;
           onEventStart("dblclick", task, e);
         }}
         onClick={e => {
+          if (task.isDisabled) return;
           onEventStart("click", task, e);
           if (selectedItemsIdSet.has(task.id)) {
             setSelectedItem(null);
@@ -249,10 +253,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           setSelectedItem(task);
         }}
         onFocus={() => {
+          if (task.isDisabled) return;
           onEventStart("select", task);
         }}
         onMouseDown={e => {
-          if (!isDateChangeable) return;
+          if (!isDateChangeable || task.isDisabled) return;
           onEventStart("move", task, e);
         }}
       >
