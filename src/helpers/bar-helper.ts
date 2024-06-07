@@ -387,6 +387,13 @@ const moveByX = (x: number, xStep: number, task: BarTask) => {
   return [newX1, newX2];
 };
 
+const moveByY = (y: number, yStep: number, task: BarTask) => {
+  const steps = Math.round((y - task.y) / yStep);
+  const additionalYValue = steps * yStep;
+  const newY = task.y + additionalYValue;
+  return newY;
+};
+
 const dateByX = (
   x: number,
   taskX: number,
@@ -407,11 +414,14 @@ const dateByX = (
  */
 export const handleTaskBySVGMouseEvent = (
   svgX: number,
+  svgY: number,
   action: BarMoveAction,
   selectedTask: BarTask | BarTask[],
   xStep: number,
+  yStep: number,
   timeStep: number,
   initEventX1Delta: number,
+  initEventYDelta: number,
   rtl: boolean
 ): { isChanged: boolean; changedTask: BarTask | BarTask[] } => {
   const handleSingleTask = (
@@ -421,20 +431,26 @@ export const handleTaskBySVGMouseEvent = (
       case "milestone":
         return handleTaskBySVGMouseEventForMilestone(
           svgX,
+          svgY,
           action,
           task,
           xStep,
+          yStep,
           timeStep,
-          initEventX1Delta - task.x1
+          initEventX1Delta - task.x1,
+          initEventYDelta - task.y
         );
       default:
         return handleTaskBySVGMouseEventForBar(
           svgX,
+          svgY,
           action,
           task,
           xStep,
+          yStep,
           timeStep,
           initEventX1Delta - task.x1,
+          initEventYDelta - task.y,
           rtl
         );
     }
@@ -452,11 +468,14 @@ export const handleTaskBySVGMouseEvent = (
 
 const handleTaskBySVGMouseEventForBar = (
   svgX: number,
+  svgY: number,
   action: BarMoveAction,
   selectedTask: BarTask,
   xStep: number,
+  yStep: number,
   timeStep: number,
   initEventX1Delta: number,
+  initEventYDelta: number,
   rtl: boolean
 ): { isChanged: boolean; changedTask: BarTask } => {
   const changedTask: BarTask = { ...selectedTask };
@@ -552,8 +571,16 @@ const handleTaskBySVGMouseEventForBar = (
         xStep,
         selectedTask
       );
+      const newY = moveByY(svgY - initEventYDelta, yStep, selectedTask);
+      const index = Math.floor(newY / yStep);
+      isChanged = newMoveX1 !== selectedTask.x1 || newY !== selectedTask.y;
+      const isChangeY =
+        !changedTask.allowedIndexes ||
+        (changedTask.allowedIndexes?.length === 2 &&
+          changedTask.allowedIndexes[0] <= index &&
+          changedTask.allowedIndexes[1] >= index);
 
-      isChanged = newMoveX1 !== selectedTask.x1;
+      isChanged = newMoveX1 !== selectedTask.x1 || newY !== selectedTask.y;
       if (isChanged) {
         changedTask.start = dateByX(
           newMoveX1,
@@ -571,6 +598,9 @@ const handleTaskBySVGMouseEventForBar = (
         );
         changedTask.x1 = newMoveX1;
         changedTask.x2 = newMoveX2;
+        if (isChangeY) {
+          changedTask.y = newY;
+        }
         const [progressWidth, progressX] = progressWithByParams(
           changedTask.x1,
           changedTask.x2,
@@ -589,11 +619,14 @@ const handleTaskBySVGMouseEventForBar = (
 
 const handleTaskBySVGMouseEventForMilestone = (
   svgX: number,
+  svgY: number,
   action: BarMoveAction,
   selectedTask: BarTask,
   xStep: number,
+  yStep: number,
   timeStep: number,
-  initEventX1Delta: number
+  initEventX1Delta: number,
+  initEventYDelta: number
 ): { isChanged: boolean; changedTask: BarTask } => {
   const changedTask: BarTask = { ...selectedTask };
   let isChanged = false;
@@ -604,7 +637,14 @@ const handleTaskBySVGMouseEventForMilestone = (
         xStep,
         selectedTask
       );
-      isChanged = newMoveX1 !== selectedTask.x1;
+      const newY = moveByY(svgY - initEventYDelta, yStep, selectedTask);
+      const index = Math.floor(newY / yStep);
+      isChanged = newMoveX1 !== selectedTask.x1 || newY !== selectedTask.y;
+      const isChangeY =
+        !changedTask.allowedIndexes ||
+        (changedTask.allowedIndexes?.length === 2 &&
+          changedTask.allowedIndexes[0] >= index &&
+          changedTask.allowedIndexes[1] <= index);
       if (isChanged) {
         changedTask.start = dateByX(
           newMoveX1,
@@ -616,6 +656,9 @@ const handleTaskBySVGMouseEventForMilestone = (
         changedTask.end = changedTask.start;
         changedTask.x1 = newMoveX1;
         changedTask.x2 = newMoveX2;
+        if (isChangeY) {
+          changedTask.y = newY;
+        }
       }
       break;
     }

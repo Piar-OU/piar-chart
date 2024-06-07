@@ -91,7 +91,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     () => (rowHeight * barFill) / 100,
     [rowHeight, barFill]
   );
-
   const [selectedTask, setSelectedTask] = useState<BarTask>();
   const [failedTask, setFailedTask] = useState<BarTask | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);

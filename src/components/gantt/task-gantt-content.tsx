@@ -72,6 +72,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   const point = svg?.current?.createSVGPoint();
   const [xStep, setXStep] = useState(0);
   const [initEventX1Delta, setInitEventX1Delta] = useState(0);
+  const [initEventYDelta, setInitEventYDelta] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
   const [project, setProject] = useState<number | null>(null);
   const [selectedItem, setSelectedItem] = useState<BarTask | null>(null);
@@ -103,6 +104,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       event.preventDefault();
 
       point.x = event.clientX;
+      point.y = event.clientY;
 
       const cursor = point.matrixTransform(
         svg?.current.getScreenCTM()?.inverse()
@@ -110,11 +112,14 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
 
       const { isChanged, changedTask } = handleTaskBySVGMouseEvent(
         cursor.x,
+        cursor.y,
         ganttEvent.action as BarMoveAction,
         ganttEvent.changedTask,
         xStep,
+        rowHeight,
         timeStep,
         initEventX1Delta,
+        initEventYDelta,
         rtl
       );
       if (isChanged) {
@@ -129,24 +134,30 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       event.preventDefault();
 
       point.x = event.clientX;
+      point.y = event.clientY;
+
       const cursor = point.matrixTransform(
         svg?.current.getScreenCTM()?.inverse()
       );
 
       const { changedTask: newChangedTask } = handleTaskBySVGMouseEvent(
         cursor.x,
+        cursor.y,
         action as BarMoveAction,
         changedTask,
         xStep,
+        rowHeight,
         timeStep,
         initEventX1Delta,
+        initEventYDelta,
         rtl
       );
 
       const isNotLikeOriginal = (originalTask: BarTask, newTask: BarTask) =>
         originalTask.start !== newTask.start ||
         originalTask.end !== newTask.end ||
-        originalTask.progress !== newTask.progress;
+        originalTask.progress !== newTask.progress ||
+        originalTask.y !== newTask.y;
 
       // remove listeners
       svg.current.removeEventListener("mousemove", handleMouseMove);
@@ -218,6 +229,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   }, [
     ganttEvent,
     xStep,
+    rowHeight,
     initEventX1Delta,
     onProgressChange,
     timeStep,
@@ -228,6 +240,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     rtl,
     setFailedTask,
     setGanttEvent,
+    initEventYDelta,
   ]);
 
   /**
@@ -279,10 +292,12 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     else if (action === "move") {
       if (!svg?.current || !point) return;
       point.x = event.clientX;
+      point.y = event.clientY;
       const cursor = point.matrixTransform(
         svg.current.getScreenCTM()?.inverse()
       );
       setInitEventX1Delta(cursor.x);
+      setInitEventYDelta(cursor.y);
       setGanttEvent({
         action,
         changedTask:

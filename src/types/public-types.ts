@@ -31,6 +31,7 @@ export interface Task {
   dependencies?: string[];
   hideChildren?: boolean;
   displayOrder?: number;
+  allowedIndexes?: number[];
 }
 
 export interface EventOption {
