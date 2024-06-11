@@ -27,6 +27,7 @@ export interface Task {
     progressSelectedColor?: string;
   };
   isDisabled?: boolean;
+  isInfo?: boolean;
   project?: string;
   dependencies?: string[];
   hideChildren?: boolean;
@@ -105,6 +106,10 @@ export interface StylingOption {
   barProgressSelectedColor?: string;
   barBackgroundColor?: string;
   barBackgroundSelectedColor?: string;
+  infoProgressColor?: string;
+  infoProgressSelectedColor?: string;
+  infoBackgroundColor?: string;
+  infoBackgroundSelectedColor?: string;
   projectProgressColor?: string;
   projectProgressSelectedColor?: string;
   projectBackgroundColor?: string;

@@ -47,6 +47,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   projectBackgroundSelectedColor = "#f7bb53",
   milestoneBackgroundColor = "#f1c453",
   milestoneBackgroundSelectedColor = "#f29e4c",
+  infoProgressColor = "#a3a3ff",
+  infoProgressSelectedColor = "#8282f5",
+  infoBackgroundColor = "#b8c2cc",
+  infoBackgroundSelectedColor = "#aeb8c2",
   rtl = false,
   handleWidth = 8,
   timeStep = 300000,
@@ -124,6 +128,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         barCornerRadius,
         handleWidth,
         rtl,
+        infoProgressColor,
+        infoProgressSelectedColor,
+        infoBackgroundColor,
+        infoBackgroundSelectedColor,
         barProgressColor,
         barProgressSelectedColor,
         barBackgroundColor,
@@ -159,6 +167,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     scrollX,
     onExpanderClick,
     trigger,
+    infoProgressColor,
+    infoProgressSelectedColor,
+    infoBackgroundColor,
+    infoBackgroundSelectedColor,
   ]);
 
   useEffect(() => {
@@ -276,10 +288,16 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         prev.map(task => ({
           ...task,
           styles: {
-            progressColor: barProgressColor,
-            progressSelectedColor: barProgressSelectedColor,
-            backgroundColor: barBackgroundColor,
-            backgroundSelectedColor: barBackgroundSelectedColor,
+            progressColor: task.isInfo ? infoProgressColor : barProgressColor,
+            progressSelectedColor: task.isInfo
+              ? infoProgressSelectedColor
+              : barProgressSelectedColor,
+            backgroundColor: task.isInfo
+              ? infoBackgroundColor
+              : barBackgroundColor,
+            backgroundSelectedColor: task.isInfo
+              ? infoBackgroundSelectedColor
+              : barBackgroundSelectedColor,
           },
         }))
       );
@@ -295,6 +313,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     barBackgroundSelectedColor,
     hoveredBarTaskId,
     fieldFiltering,
+    infoProgressColor,
+    infoProgressSelectedColor,
+    infoBackgroundColor,
+    infoBackgroundSelectedColor,
   ]);
 
   useEffect(() => {
