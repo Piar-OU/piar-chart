@@ -41,6 +41,12 @@
   stroke-width: 2;
 }
 
+.maskError {
+  fill: rgba(100, 0, 0, 0.5);
+  stroke: red;
+  stroke-width: 2;
+}
+
 .selectedMask {
   fill: rgba(0, 100, 0, 0.5);
   stroke: #52c41a;
@@ -52,6 +58,8 @@
   stroke: #8c8c8c;
   stroke-width: 2;
 }
+
+
 
 .barWrapper {
   cursor: pointer;

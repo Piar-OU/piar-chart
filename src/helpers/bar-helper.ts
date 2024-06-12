@@ -600,15 +600,9 @@ const handleTaskBySVGMouseEventForBar = (
         selectedTask
       );
       const newY = moveByY(svgY - initEventYDelta, yStep, selectedTask);
-      const index = Math.floor(newY / yStep);
-      isChanged = newMoveX1 !== selectedTask.x1 || newY !== selectedTask.y;
-      const isChangeY =
-        !changedTask.allowedIndexes ||
-        (changedTask.allowedIndexes?.length === 2 &&
-          changedTask.allowedIndexes[0] <= index &&
-          changedTask.allowedIndexes[1] >= index);
 
       isChanged = newMoveX1 !== selectedTask.x1 || newY !== selectedTask.y;
+
       if (isChanged) {
         changedTask.start = dateByX(
           newMoveX1,
@@ -626,9 +620,8 @@ const handleTaskBySVGMouseEventForBar = (
         );
         changedTask.x1 = newMoveX1;
         changedTask.x2 = newMoveX2;
-        if (isChangeY) {
-          changedTask.y = newY;
-        }
+        changedTask.y = newY;
+
         const [progressWidth, progressX] = progressWithByParams(
           changedTask.x1,
           changedTask.x2,
@@ -666,13 +659,8 @@ const handleTaskBySVGMouseEventForMilestone = (
         selectedTask
       );
       const newY = moveByY(svgY - initEventYDelta, yStep, selectedTask);
-      const index = Math.floor(newY / yStep);
       isChanged = newMoveX1 !== selectedTask.x1 || newY !== selectedTask.y;
-      const isChangeY =
-        !changedTask.allowedIndexes ||
-        (changedTask.allowedIndexes?.length === 2 &&
-          changedTask.allowedIndexes[0] >= index &&
-          changedTask.allowedIndexes[1] <= index);
+
       if (isChanged) {
         changedTask.start = dateByX(
           newMoveX1,
@@ -684,9 +672,7 @@ const handleTaskBySVGMouseEventForMilestone = (
         changedTask.end = changedTask.start;
         changedTask.x1 = newMoveX1;
         changedTask.x2 = newMoveX2;
-        if (isChangeY) {
-          changedTask.y = newY;
-        }
+        changedTask.y = newY;
       }
       break;
     }

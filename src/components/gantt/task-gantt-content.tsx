@@ -175,6 +175,18 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
           isNotLikeOriginal(originalTask, task)
         ) {
           try {
+            const index = Math.floor(task.y / rowHeight);
+
+            const isChangedY =
+              !task.allowedIndexes ||
+              (task.allowedIndexes[0] <= index &&
+                task.allowedIndexes[1] >= index) ||
+              (task.allowedIndexes[2] <= index &&
+                task.allowedIndexes[3] >= index);
+
+            if (!isChangedY) {
+              throw new Error();
+            }
             const result = await onDateChange(task, task.barChildren);
             if (result !== undefined) {
               operationSuccess = result;
@@ -470,6 +482,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
               onEventStart={handleBarEventStart}
               key={task.id}
               viewMode={viewMode}
+              rowHeight={rowHeight}
               mainTask={mainTask}
               childTask={childTask}
               setMousePosition={setMousePosition}

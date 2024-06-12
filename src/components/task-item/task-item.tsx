@@ -14,6 +14,7 @@ export type TaskItemProps = {
   task: BarTask;
   selectedItemsIdSet: Set<string>;
   arrowIndent: number;
+  rowHeight: number;
   action: GanttContentMoveAction;
   project: number | null;
   taskHeight: number;
@@ -55,6 +56,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     mainTask,
     childTask,
     arrowIndent,
+    rowHeight,
     action,
     hoveredBarTaskId,
     isDateChangeable,
@@ -144,6 +146,12 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
 
   const isHovered = hoveredBarTaskId === task.id;
   const isSameProject = project === task.projectId;
+  const index = Math.floor(task.y / rowHeight);
+
+  const isChangedY =
+    !task.allowedIndexes ||
+    (task.allowedIndexes[0] <= index && task.allowedIndexes[1] >= index) ||
+    (task.allowedIndexes[2] <= index && task.allowedIndexes[3] >= index);
 
   const progressPoint = getProgressPoint(
     +!rtl * task.progressWidth + task.progressX,
@@ -281,8 +289,12 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
               height={task.height}
               className={
                 selectedItemsIdSet.has(task.id)
-                  ? style.selectedMask
-                  : style.mask
+                  ? isChangedY
+                    ? style.selectedMask
+                    : style.maskError
+                  : isChangedY
+                  ? style.mask
+                  : style.maskError
               }
             />
           )}
@@ -298,7 +310,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           />
         )}
       </g>
-      {!task.isDisabled && (
+      {!task.isDisabled && (task.projectId || mainTask) && (
         <circle
           cx={task.x1 + 3}
           cy={task.y - 6}
@@ -319,7 +331,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           }}
         />
       )}
-      {!task.isDisabled && (
+      {!task.isDisabled && (task.projectId || mainTask) && (
         <circle
           cx={task.x2 - 3}
           cy={task.y + task.height + 6}
