@@ -229,6 +229,7 @@ const convertToBar = (
       : barProgressSelectedColor,
     ...task.styles,
   };
+
   return {
     ...task,
     typeInternal,
@@ -315,7 +316,7 @@ export const taskXCoordinateRTL = (
   return x;
 };
 
-const taskYCoordinate = (
+export const taskYCoordinate = (
   index: number,
   rowHeight: number,
   taskHeight: number
@@ -688,4 +689,149 @@ export const measureTextWidth = (text: string, font: string): number => {
     return context.measureText(text).width;
   }
   return 0;
+};
+
+export const calculateNonWorkingPeriods = (
+  shifts: {
+    startDate: string;
+    finishDate: string;
+    withDayOff: boolean;
+    isNextDayEnd: boolean;
+  }[],
+  startDate: Date,
+  endDate: Date
+) => {
+  function convertToDate(timeStr: string, date: Date, addDay = 0) {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate() + addDay,
+      hours,
+      minutes
+    );
+  }
+
+  function isWeekend(date: Date) {
+    const day = date.getDay();
+    return day === 0 || day === 6;
+  }
+
+  function isSaturday(date: Date) {
+    const day = date.getDay();
+    return day === 6;
+  }
+
+  function getDailyNonWorkingPeriods(
+    shifts: {
+      startDate: string;
+      finishDate: string;
+      withDayOff: boolean;
+      isNextDayEnd: boolean;
+    }[],
+    date: Date
+  ) {
+    let intervals = [] as { start: Date; end: Date }[];
+    let times = [] as any[];
+    let nextDayShiftEnd = null as Date | null;
+
+    shifts.forEach(shift => {
+      const startTime = convertToDate(shift.startDate, date);
+      let endTime = convertToDate(shift.finishDate, date);
+      if (shift.isNextDayEnd) {
+        endTime.setDate(endTime.getDate() + 1);
+        nextDayShiftEnd = endTime;
+      }
+
+      times.push({ time: startTime, type: "start" });
+      times.push({ time: endTime, type: "end" });
+    });
+
+    times.sort((a, b) => a.time - b.time);
+
+    let nonWorkingStart = nextDayShiftEnd
+      ? new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+          nextDayShiftEnd.getHours(),
+          nextDayShiftEnd.getMinutes()
+        )
+      : new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0);
+    const nonWorkingEnd = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      23,
+      59,
+      59
+    );
+
+    let lastEnd = nonWorkingStart;
+    let openIntervals = 0;
+
+    times.forEach(time => {
+      if (time.type === "start") {
+        if (openIntervals === 0 && time.time > lastEnd) {
+          intervals.push({ start: lastEnd, end: time.time });
+        }
+        openIntervals += 1;
+      } else if (time.type === "end") {
+        openIntervals -= 1;
+        if (openIntervals === 0) {
+          lastEnd = time.time;
+        }
+      }
+    });
+
+    if (lastEnd < nonWorkingEnd) {
+      intervals.push({ start: lastEnd, end: nonWorkingEnd });
+    }
+
+    return intervals;
+  }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  let nonWorkingPeriods = [] as { start: Date; end: Date }[];
+
+  const nightShift = shifts.find(shift => shift.isNextDayEnd);
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    if (isWeekend(d)) {
+      if (shifts.some(shift => shift.withDayOff)) {
+        const dailyNonWorkingPeriods = getDailyNonWorkingPeriods(
+          shifts,
+          new Date(d)
+        );
+        nonWorkingPeriods = nonWorkingPeriods.concat(dailyNonWorkingPeriods);
+      } else if (nightShift && isSaturday(d)) {
+        const [hours, minutes] = nightShift.finishDate.split(":").map(Number);
+
+        nonWorkingPeriods.push({
+          start: new Date(
+            d.getFullYear(),
+            d.getMonth(),
+            d.getDate(),
+            hours,
+            minutes
+          ),
+          end: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
+        });
+      } else {
+        nonWorkingPeriods.push({
+          start: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0),
+          end: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
+        });
+      }
+    } else {
+      const dailyNonWorkingPeriods = getDailyNonWorkingPeriods(
+        shifts,
+        new Date(d)
+      );
+      nonWorkingPeriods = nonWorkingPeriods.concat(dailyNonWorkingPeriods);
+    }
+  }
+
+  return nonWorkingPeriods;
 };

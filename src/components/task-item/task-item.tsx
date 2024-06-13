@@ -21,6 +21,7 @@ export type TaskItemProps = {
   isProgressChangeable: boolean;
   hoveredBarTaskId: string | null;
   isDateChangeable: boolean;
+  isShowNonWorkingTime?: boolean;
   isDelete: boolean;
   isSelected: boolean;
   mainTask: BarTask | null;

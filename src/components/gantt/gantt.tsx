@@ -36,6 +36,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   preStepsCount = 1,
   locale = "en-GB",
   barFill = 60,
+  isShowNonWorkingTime,
+  shifts,
   barCornerRadius = 3,
   barProgressColor = "#a3a3ff",
   barProgressSelectedColor = "#8282f5",
@@ -78,7 +80,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const taskListRef = useRef<HTMLDivElement>(null);
   const [dateSetup, setDateSetup] = useState<DateSetup>(() => {
     const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
-    return { viewMode, dates: seedDates(startDate, endDate, viewMode) };
+    return {
+      viewMode,
+      dates: seedDates(startDate, endDate, viewMode),
+    };
   });
   const [currentViewDate, setCurrentViewDate] = useState<Date | undefined>(
     undefined
@@ -493,6 +498,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     columnWidth,
     svgWidth,
     tasks: tasks,
+    isShowNonWorkingTime,
+    shifts,
     hoveredIndex,
     rowHeight,
     dates: dateSetup.dates,
