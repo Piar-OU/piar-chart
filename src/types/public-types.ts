@@ -33,6 +33,7 @@ export interface Task {
   hideChildren?: boolean;
   displayOrder?: number;
   allowedIndexes?: number[];
+  isOverlapping?: boolean;
 }
 
 export interface EventOption {

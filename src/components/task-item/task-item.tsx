@@ -9,10 +9,12 @@ import style from "./task-list.module.css";
 import { ViewMode } from "../../types/public-types";
 import { getProgressPoint, measureTextWidth } from "../../helpers/bar-helper";
 import { BarProgressHandle } from "./bar/bar-progress-handle";
+import { BarDateHandle } from "./bar/bar-date-handle";
 
 export type TaskItemProps = {
   task: BarTask;
   selectedItemsIdSet: Set<string>;
+  dependencyItemsIdSet: Set<string>;
   arrowIndent: number;
   rowHeight: number;
   action: GanttContentMoveAction;
@@ -53,6 +55,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   const {
     task,
     selectedItemsIdSet,
+    dependencyItemsIdSet,
     project,
     mainTask,
     childTask,
@@ -160,6 +163,8 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
     task.height
   );
 
+  const handleHeight = task.height - 2;
+
   const handleMouseDown = (e: React.MouseEvent, isTop: boolean) => {
     e.preventDefault();
     setMainTask(task);
@@ -200,6 +205,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   };
 
   const isMainTask = mainTask?.id === task.id;
+  const isContainedChain = dependencyItemsIdSet.has(task.id);
   const isChildTask = childTask?.id === task.id;
 
   return (
@@ -215,9 +221,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           e.stopPropagation();
         }}
         onMouseEnter={e => {
+          if (action === "end") return;
           if (task.isDisabled) return;
           if (mainTask && !task.isDisabled) {
             if (mainTask.id === task.id) return;
+            if (isContainedChain) return;
             setChildTask(task);
             return;
           }
@@ -279,8 +287,13 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           height={task.height}
           className={style.border}
         />
-        {(isHovered || isSameProject || isSelectdItem) &&
-          action !== "progress" && (
+        {(isHovered ||
+          isSameProject ||
+          isSelectdItem ||
+          (task.isOverlapping && !dependencyItemsIdSet.size) ||
+          isContainedChain) &&
+          action !== "progress" &&
+          action !== "end" && (
             <rect
               x={task.x1}
               y={task.y}
@@ -289,7 +302,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
               width={task.x2 - task.x1}
               height={task.height}
               className={
-                selectedItemsIdSet.has(task.id)
+                isContainedChain
+                  ? style.maskError
+                  : task.isOverlapping && !dependencyItemsIdSet.size
+                  ? style.maskError
+                  : selectedItemsIdSet.has(task.id)
                   ? isChangedY
                     ? style.selectedMask
                     : style.maskError
@@ -302,7 +319,19 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
       </g>
 
       <g className="handleGroup">
-        {isProgressChangeable && action !== "move" && (
+        {isDateChangeable && action !== "progress" && (
+          <BarDateHandle
+            x={task.x2 - task.handleWidth - 1}
+            y={task.y + 1}
+            width={task.handleWidth}
+            height={handleHeight}
+            barCornerRadius={task.barCornerRadius}
+            onMouseDown={e => {
+              onEventStart("end", task, e);
+            }}
+          />
+        )}
+        {isProgressChangeable && action !== "move" && action !== "end" && (
           <BarProgressHandle
             progressPoint={progressPoint}
             onMouseDown={e => {
@@ -316,13 +345,22 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           cx={task.x1 + 3}
           cy={task.y - 6}
           r={4}
-          fill={isMainTask ? "#95de64" : isChildTask ? "#ffd666" : "#ffffff"}
+          fill={
+            isMainTask
+              ? "#95de64"
+              : isContainedChain
+              ? "red"
+              : isChildTask
+              ? "#ffd666"
+              : "#ffffff"
+          }
           stroke="#8c8c8c"
           strokeWidth={1}
           onMouseDown={e => handleMouseDown(e, true)}
           onMouseEnter={() => {
             if (!mainTask) return;
             if (mainTask.id === task.id) return;
+            if (isContainedChain) return;
             setChildTask(task);
           }}
           onMouseLeave={() => {
@@ -337,13 +375,22 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           cx={task.x2 - 3}
           cy={task.y + task.height + 6}
           r={4}
-          fill={isMainTask ? "#95de64" : isChildTask ? "#ffd666" : "#ffffff"}
+          fill={
+            isMainTask
+              ? "#95de64"
+              : isContainedChain
+              ? "red"
+              : isChildTask
+              ? "#ffd666"
+              : "#ffffff"
+          }
           stroke="#8c8c8c"
           strokeWidth={1}
           onMouseDown={e => handleMouseDown(e, false)}
           onMouseEnter={() => {
             if (!mainTask) return;
             if (mainTask.id === task.id) return;
+            if (isContainedChain) return;
             setChildTask(task);
           }}
           onMouseLeave={() => {

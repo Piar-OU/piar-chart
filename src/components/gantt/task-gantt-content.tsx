@@ -385,10 +385,61 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     [getSelectedItemsIdSet]
   );
 
+  const getdependencyItemsIdSet = useCallback(() => {
+    const collectBarChildrenIds = (item: BarTask, idSet: Set<string>) => {
+      if (!item) return;
+
+      idSet.add(item.id);
+
+      if (item.barChildren?.length) {
+        item.barChildren.forEach(child => collectBarChildrenIds(child, idSet));
+      }
+    };
+
+    const collectDependencies = (
+      item: BarTask,
+      idSet: Set<string>,
+      tasksMap: Map<string, BarTask>
+    ) => {
+      if (!item) return;
+
+      if (item.dependencies?.length) {
+        item.dependencies.forEach(dependencyId => {
+          if (!idSet.has(dependencyId)) {
+            idSet.add(dependencyId);
+            const dependencyItem = tasksMap.get(dependencyId);
+            if (dependencyItem) {
+              collectDependencies(dependencyItem, idSet, tasksMap);
+            }
+          }
+        });
+      }
+    };
+
+    if (!mainTask) return new Set() as Set<string>;
+
+    const selectedItemsIdSet: Set<string> = new Set();
+
+    collectBarChildrenIds(mainTask, selectedItemsIdSet);
+
+    collectDependencies(mainTask, selectedItemsIdSet, tasksMap);
+
+    return selectedItemsIdSet as Set<string>;
+  }, [mainTask, tasksMap]);
+
+  const dependencyItemsIdSet = useMemo(
+    () => getdependencyItemsIdSet(),
+    [getdependencyItemsIdSet]
+  );
+
   const getArrows = () => {
     const arrowElements = (
-      (project && ganttEvent.action !== "progress") ||
-      (selectedItem?.projectId && ganttEvent.action !== "progress") ||
+      (project &&
+        ganttEvent.action !== "progress" &&
+        ganttEvent.action !== "end") ||
+      (selectedItem?.projectId &&
+        ganttEvent.action !== "progress" &&
+        ganttEvent.action !== "end") ||
       ganttEvent.action === "move"
         ? tasks
         : []
@@ -471,6 +522,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
             <TaskItem
               task={task}
               selectedItemsIdSet={selectedItemsIdSet}
+              dependencyItemsIdSet={dependencyItemsIdSet}
               arrowIndent={arrowIndent}
               hoveredBarTaskId={hoveredBarTaskId}
               project={project}

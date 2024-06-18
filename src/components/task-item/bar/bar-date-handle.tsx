@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./bar.module.css";
+import styles from "../task-list.module.css";
 
 type BarDateHandleProps = {
   x: number;
