@@ -36,8 +36,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   preStepsCount = 1,
   locale = "en-GB",
   barFill = 60,
-  isShowNonWorkingTime,
-  shifts,
+  ganttSchedule,
   barCornerRadius = 3,
   barProgressColor = "#a3a3ff",
   barProgressSelectedColor = "#8282f5",
@@ -116,12 +115,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   useEffect(() => {
     const [startDate, endDate] = ganttDateRange(tasks, viewMode, preStepsCount);
     let newDates = seedDates(startDate, endDate, viewMode);
-    if (rtl) {
-      newDates = newDates.reverse();
-      if (scrollX === -1) {
-        setScrollX(newDates.length * columnWidth);
-      }
-    }
+
     setDateSetup({ dates: newDates, viewMode });
     setBarTasks(
       convertToBarTasks(
@@ -498,8 +492,6 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     columnWidth,
     svgWidth,
     tasks: tasks,
-    isShowNonWorkingTime,
-    shifts,
     hoveredIndex,
     rowHeight,
     dates: dateSetup.dates,
@@ -590,6 +582,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           viewMode={viewMode}
           columnWidth={columnWidth}
           dates={dateSetup.dates}
+          ganttSchedule={ganttSchedule}
         />
         {ganttEvent.changedTask && ganttEvent.action !== "move" && (
           <Tooltip

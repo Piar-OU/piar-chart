@@ -149,6 +149,12 @@ export interface StylingOption {
   }>;
 }
 
+export interface NonWorkingPeriod {
+  x1: number;
+  x2: number;
+  y: number;
+}
+
 export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   tasks: (Task | Task[])[];
   fieldFiltering?: Record<string, any>;
@@ -156,14 +162,5 @@ export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   onDependency?: (taskFrom: Task, taskTo: Task) => void;
   trigger?: boolean;
   isLoading?: boolean;
-  isShowNonWorkingTime?: boolean;
-  shifts?: {
-    shiftTypes: {
-      startDate: string;
-      finishDate: string;
-      withDayOff: boolean;
-      isNextDayEnd: boolean;
-    }[];
-    index: number;
-  }[];
+  ganttSchedule: JSX.Element[];
 }
