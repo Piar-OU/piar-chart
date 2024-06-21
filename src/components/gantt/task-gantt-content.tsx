@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { EventOption, Task, ViewMode } from "../../types/public-types";
 import { BarTask } from "../../types/bar-task";
 import { Arrow } from "../other/arrow";
-import { handleTaskBySVGMouseEvent } from "../../helpers/bar-helper";
+import {
+  handleTaskBySVGMouseEvent,
+  timeFormat,
+} from "../../helpers/bar-helper";
 import { isKeyboardEvent } from "../../helpers/other-helper";
 import { TaskItem } from "../task-item/task-item";
 import {
@@ -10,12 +13,14 @@ import {
   GanttContentMoveAction,
   GanttEvent,
 } from "../../types/gantt-task-actions";
+import style from "../task-item/task-list.module.css";
 
 export type TaskGanttContentProps = {
   uneducatedTasks: (Task | Task[])[];
   fieldFiltering?: Record<string, any>;
   tasks: BarTask[];
   dates: Date[];
+  ganttScheduleByY?: Record<string, JSX.Element[]>;
   hoveredBarTaskId: string | null;
   viewMode: ViewMode;
   ganttEvent: GanttEvent;
@@ -43,6 +48,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   tasks,
   fieldFiltering,
   dates,
+  ganttScheduleByY,
   viewMode,
   hoveredBarTaskId,
   ganttEvent,
@@ -56,6 +62,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   arrowIndent,
   fontFamily,
   fontSize,
+  uneducatedTasks,
   rtl,
   setGanttEvent,
   setFailedTask,
@@ -86,7 +93,6 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     () => new Map(tasks.map(task => [task.id, task])),
     [tasks]
   );
-
   // create xStep
   useEffect(() => {
     const dateDelta =
@@ -501,6 +507,22 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
     setIsDependency(false);
   }, [childTask, isDependency, mainTask, onDependency]);
 
+  const ganttHeight = rowHeight * uneducatedTasks.length;
+
+  const movingTask =
+    ganttEvent.action === "move" &&
+    hoveredBarTaskId &&
+    tasksMap.get(hoveredBarTaskId);
+
+  const nonWorkingTime =
+    ganttScheduleByY &&
+    movingTask &&
+    ganttScheduleByY[Math.floor(movingTask.y / rowHeight)].find(
+      element =>
+        movingTask.x1 >= element.props.x &&
+        movingTask.x1 < element.props.x + element.props.width
+    );
+
   return (
     <g className="content">
       <defs>
@@ -571,6 +593,55 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
           strokeDasharray="4"
           markerEnd="url(#arrow)"
         />
+      )}
+      {movingTask && (
+        <g fontFamily={fontFamily} fontSize={fontSize}>
+          <text
+            x={movingTask.x1 - 120}
+            y={movingTask.y}
+            className={
+              nonWorkingTime
+                ? style.barLabelOutsideError
+                : style.barLabelOutside
+            }
+          >
+            {`${timeFormat(movingTask.start.getDate())}.${timeFormat(
+              movingTask.start.getMonth()
+            )}.${movingTask.start.getFullYear()} ${timeFormat(
+              movingTask.start.getHours()
+            )}:${timeFormat(movingTask.start.getMinutes())}`}
+          </text>
+          <text
+            x={movingTask.x2 + 10}
+            y={movingTask.y + taskHeight + 11}
+            width={100}
+            className={style.barLabelOutside}
+          >
+            {`${timeFormat(movingTask.end.getDate())}.${timeFormat(
+              movingTask.end.getMonth()
+            )}.${movingTask.end.getFullYear()} ${timeFormat(
+              movingTask.end.getHours()
+            )}:${timeFormat(movingTask.end.getMinutes())}`}
+          </text>
+          <line
+            x1={movingTask.x1}
+            y1={0}
+            x2={movingTask.x1}
+            y2={ganttHeight}
+            stroke={!!nonWorkingTime ? "red" : "black"}
+            strokeWidth={2}
+            strokeDasharray="8 8"
+          />
+          <line
+            x1={movingTask.x2}
+            y1={0}
+            x2={movingTask.x2}
+            y2={ganttHeight}
+            stroke="black"
+            strokeWidth={2}
+            strokeDasharray="8 8"
+          />
+        </g>
       )}
     </g>
   );

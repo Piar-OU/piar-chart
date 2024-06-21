@@ -317,7 +317,6 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
             />
           )}
       </g>
-
       <g className="handleGroup">
         {isDateChangeable && action !== "progress" && (
           <BarDateHandle

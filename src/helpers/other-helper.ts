@@ -1,6 +1,19 @@
 import { BarTask } from "../types/bar-task";
 import { Task, ViewMode } from "../types/public-types";
 
+export const calculateVisibleDateIndices = (
+  scrollX: number,
+  columnWidth: number,
+  containerWidth: number
+) => {
+  const startIndex = Math.floor(scrollX / columnWidth);
+  const endIndex = Math.ceil((scrollX + containerWidth) / columnWidth);
+  return {
+    startIndex,
+    endIndex,
+  };
+};
+
 export function isKeyboardEvent(
   event: React.MouseEvent | React.KeyboardEvent | React.FocusEvent
 ): event is React.KeyboardEvent {
@@ -17,19 +30,25 @@ export function isBarTask(task: Task | BarTask): task is BarTask {
   return (task as BarTask).x1 !== undefined;
 }
 
-export function removeHiddenTasks(tasks: Task[]) {
-  const groupedTasks = tasks.filter(
+export const removeHiddenTasks = (tasks: (Task | Task[])[]) => {
+  let flattenedTasks: Task[] = tasks.flatMap(task =>
+    Array.isArray(task) ? task : [task]
+  );
+
+  const groupedTasks = flattenedTasks.filter(
     t => t.hideChildren && t.type === "project"
   );
+
   if (groupedTasks.length > 0) {
     for (let i = 0; groupedTasks.length > i; i++) {
       const groupedTask = groupedTasks[i];
-      const children = getChildren(tasks, groupedTask);
-      tasks = tasks.filter(t => children.indexOf(t) === -1);
+      const children = getChildren(flattenedTasks, groupedTask);
+      flattenedTasks = flattenedTasks.filter(t => children.indexOf(t) === -1);
     }
   }
-  return tasks;
-}
+
+  return flattenedTasks;
+};
 
 function getChildren(taskList: Task[], task: Task) {
   let tasks: Task[] = [];
@@ -43,7 +62,7 @@ function getChildren(taskList: Task[], task: Task) {
   var taskChildren: Task[] = [];
   tasks.forEach(t => {
     taskChildren.push(...getChildren(taskList, t));
-  })
+  });
   tasks = tasks.concat(tasks, taskChildren);
   return tasks;
 }
@@ -121,3 +140,23 @@ export const calculateCurrentTimePosition = (
 
   return lineX;
 };
+
+export function combineArraysFromSchedule(
+  schedule: Record<string, JSX.Element[]>,
+  startIndex: number,
+  endIndex: number
+) {
+  let resultArray = [] as JSX.Element[];
+
+  for (let key in schedule) {
+    if (schedule.hasOwnProperty(key)) {
+      const keyNum = parseInt(key, 10);
+
+      if (keyNum >= startIndex && keyNum <= endIndex) {
+        resultArray = resultArray.concat(schedule[key]);
+      }
+    }
+  }
+
+  return resultArray;
+}

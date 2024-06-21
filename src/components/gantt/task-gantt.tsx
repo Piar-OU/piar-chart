@@ -36,7 +36,22 @@ export const TaskGantt: React.FC<TaskGanttProps> = ({
   const ganttSVGRef = useRef<SVGSVGElement>(null);
   const horizontalContainerRef = useRef<HTMLDivElement>(null);
   const verticalGanttContainerRef = useRef<HTMLDivElement>(null);
-  const newBarProps = { ...barProps, svg: ganttSVGRef, viewMode };
+  const ganttScheduleByY = ganttSchedule.reduce((acc, schedule) => {
+    const index = Math.floor(schedule.props.y / gridProps.rowHeight);
+    if (!acc[index]) {
+      acc[index] = [];
+    }
+
+    acc[index].push(schedule);
+
+    return acc;
+  }, {} as Record<string, JSX.Element[]>);
+  const newBarProps = {
+    ...barProps,
+    ganttScheduleByY,
+    svg: ganttSVGRef,
+    viewMode,
+  };
 
   const [currentTime, setCurrentTime] = useState(new Date());
 

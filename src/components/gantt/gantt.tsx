@@ -22,6 +22,10 @@ import { GanttEvent } from "../../types/gantt-task-actions";
 import { DateSetup } from "../../types/date-setup";
 import { HorizontalScroll } from "../other/horizontal-scroll";
 import styles from "./gantt.module.css";
+import {
+  calculateVisibleDateIndices,
+  combineArraysFromSchedule,
+} from "../../helpers/other-helper";
 
 export const Gantt: React.FunctionComponent<GanttProps> = ({
   tasks,
@@ -104,12 +108,13 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredBarTaskId, setHoveredBarTaskId] = useState<string | null>(null);
 
-  const svgWidth = dateSetup.dates.length * columnWidth;
+  const svgWidth = dateSetup.dates.dates.length * columnWidth;
   const ganttFullHeight = tasks.length * rowHeight;
 
   const [scrollY, setScrollY] = useState(0);
   const [scrollX, setScrollX] = useState(-1);
   const [ignoreScrollEvent, setIgnoreScrollEvent] = useState(false);
+  const [visibleSchedule, setVisibleSchedule] = useState<JSX.Element[]>([]);
 
   // task change events
   useEffect(() => {
@@ -120,6 +125,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     setBarTasks(
       convertToBarTasks(
         tasks,
+        viewMode,
         newDates,
         columnWidth,
         rowHeight,
@@ -143,6 +149,22 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         milestoneBackgroundSelectedColor
       )
     );
+    if (svgContainerWidth && taskListWidth) {
+      const containerWidth = svgContainerWidth - taskListWidth;
+      const { startIndex, endIndex } = calculateVisibleDateIndices(
+        scrollX,
+        columnWidth,
+        containerWidth
+      );
+
+      setVisibleSchedule(
+        combineArraysFromSchedule(
+          ganttSchedule,
+          startIndex > 0 ? startIndex : 0,
+          endIndex
+        )
+      );
+    }
   }, [
     tasks,
     viewMode,
@@ -179,10 +201,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
         (viewDate && currentViewDate?.valueOf() !== viewDate.valueOf()))
     ) {
       const dates = dateSetup.dates;
-      const index = dates.findIndex(
+      const index = dates.dates.findIndex(
         (d, i) =>
           viewDate.valueOf() >= d.valueOf() &&
-          i + 1 !== dates.length &&
+          i + 1 !== dates.dates.length &&
           viewDate.valueOf() < dates[i + 1].valueOf()
       );
       if (index === -1) {
@@ -331,6 +353,22 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     }
     if (taskListRef.current) {
       setTaskListWidth(taskListRef.current.offsetWidth);
+    }
+    if (wrapperRef.current && taskListRef.current) {
+      const containerWidth =
+        wrapperRef.current.offsetWidth - taskListRef.current.offsetWidth;
+      const { startIndex, endIndex } = calculateVisibleDateIndices(
+        scrollX,
+        columnWidth,
+        containerWidth
+      );
+      setVisibleSchedule(
+        combineArraysFromSchedule(
+          ganttSchedule,
+          startIndex > 0 ? startIndex : 0,
+          endIndex
+        )
+      );
     }
   }, [taskListRef.current?.offsetWidth, listCellWidth]);
 
@@ -494,7 +532,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     tasks: tasks,
     hoveredIndex,
     rowHeight,
-    dates: dateSetup.dates,
+    dates: dateSetup.dates.dates,
     todayColor,
     rtl,
     setHoveredIndex: handleHoveredTask,
@@ -513,7 +551,7 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     uneducatedTasks: tasks,
     fieldFiltering,
     tasks: barTasks,
-    dates: dateSetup.dates,
+    dates: dateSetup.dates.dates,
     ganttEvent,
     selectedTask,
     hoveredBarTaskId,
@@ -581,8 +619,8 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
           scrollX={scrollX}
           viewMode={viewMode}
           columnWidth={columnWidth}
-          dates={dateSetup.dates}
-          ganttSchedule={ganttSchedule}
+          dates={dateSetup.dates.dates}
+          ganttSchedule={visibleSchedule}
         />
         {ganttEvent.changedTask && ganttEvent.action !== "move" && (
           <Tooltip

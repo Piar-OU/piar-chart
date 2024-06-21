@@ -149,6 +149,13 @@ export interface StylingOption {
   }>;
 }
 
+export interface Shift {
+  startDate: string;
+  finishDate: string;
+  withDayOff: boolean;
+  isNextDayEnd: boolean;
+}
+
 export interface NonWorkingPeriod {
   x1: number;
   x2: number;
@@ -162,5 +169,5 @@ export interface GanttProps extends EventOption, DisplayOption, StylingOption {
   onDependency?: (taskFrom: Task, taskTo: Task) => void;
   trigger?: boolean;
   isLoading?: boolean;
-  ganttSchedule: JSX.Element[];
+  ganttSchedule: Record<string, JSX.Element[]>;
 }

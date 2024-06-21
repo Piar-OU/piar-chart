@@ -13,4 +13,5 @@ export type {
   DisplayOption,
   EventOption,
   NonWorkingPeriod,
+  Shift,
 } from "./types/public-types";

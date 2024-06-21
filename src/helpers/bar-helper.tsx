@@ -1,10 +1,12 @@
-import { Task } from "../types/public-types";
+import React from "react";
+import { Shift, Task, ViewMode } from "../types/public-types";
 import { BarTask, TaskTypeInternal } from "../types/bar-task";
 import { BarMoveAction } from "../types/gantt-task-actions";
 
 export const convertToBarTasks = (
   tasks: (Task | Task[])[],
-  dates: Date[],
+  viewMode: ViewMode,
+  dates: { dates: Date[]; indexesMap: Map<string, number> },
   columnWidth: number,
   rowHeight: number,
   taskHeight: number,
@@ -49,6 +51,7 @@ export const convertToBarTasks = (
   let barTasks: BarTask[] = flattenedTasks.map(({ task, groupIndex }) => {
     return convertToBarTask(
       task,
+      viewMode,
       groupIndex,
       dates,
       columnWidth,
@@ -90,8 +93,9 @@ export const convertToBarTasks = (
 
 const convertToBarTask = (
   task: Task,
+  viewMode: ViewMode,
   index: number,
-  dates: Date[],
+  dates: { dates: Date[]; indexesMap: Map<string, number> },
   columnWidth: number,
   rowHeight: number,
   taskHeight: number,
@@ -118,6 +122,7 @@ const convertToBarTask = (
     case "milestone":
       barTask = convertToMilestone(
         task,
+        viewMode,
         index,
         dates,
         columnWidth,
@@ -132,6 +137,7 @@ const convertToBarTask = (
     case "project":
       barTask = convertToBar(
         task,
+        viewMode,
         index,
         dates,
         columnWidth,
@@ -153,6 +159,7 @@ const convertToBarTask = (
     default:
       barTask = convertToBar(
         task,
+        viewMode,
         index,
         dates,
         columnWidth,
@@ -178,8 +185,9 @@ const convertToBarTask = (
 
 const convertToBar = (
   task: Task,
+  viewMode: ViewMode,
   index: number,
-  dates: Date[],
+  dates: { dates: Date[]; indexesMap: Map<string, number> },
   columnWidth: number,
   rowHeight: number,
   taskHeight: number,
@@ -198,11 +206,11 @@ const convertToBar = (
   let x1: number;
   let x2: number;
   if (rtl) {
-    x2 = taskXCoordinateRTL(task.start, dates, columnWidth);
-    x1 = taskXCoordinateRTL(task.end, dates, columnWidth);
+    x2 = taskXCoordinateRTL(task.start, dates, columnWidth, viewMode);
+    x1 = taskXCoordinateRTL(task.end, dates, columnWidth, viewMode);
   } else {
-    x1 = taskXCoordinate(task.start, dates, columnWidth);
-    x2 = taskXCoordinate(task.end, dates, columnWidth);
+    x1 = taskXCoordinate(task.start, dates, columnWidth, viewMode);
+    x2 = taskXCoordinate(task.end, dates, columnWidth, viewMode);
   }
   let typeInternal: TaskTypeInternal = task.type;
   if (typeInternal === "task" && x2 - x1 < handleWidth * 2) {
@@ -249,8 +257,9 @@ const convertToBar = (
 
 const convertToMilestone = (
   task: Task,
+  viewMode: ViewMode,
   index: number,
-  dates: Date[],
+  dates: { dates: Date[]; indexesMap: Map<string, number> },
   columnWidth: number,
   rowHeight: number,
   taskHeight: number,
@@ -259,7 +268,7 @@ const convertToMilestone = (
   milestoneBackgroundColor: string,
   milestoneBackgroundSelectedColor: string
 ): BarTask => {
-  const x = taskXCoordinate(task.start, dates, columnWidth);
+  const x = taskXCoordinate(task.start, dates, columnWidth, viewMode);
   const y = taskYCoordinate(index, rowHeight, taskHeight);
 
   const x1 = x - taskHeight * 0.5;
@@ -292,26 +301,53 @@ const convertToMilestone = (
   };
 };
 
+export const timeFormat = (number: number) =>
+  number < 10 ? `0${number}` : number;
+
 export const taskXCoordinate = (
   xDate: Date,
-  dates: Date[],
-  columnWidth: number
+  dates: { dates: Date[]; indexesMap: Map<string, number> },
+  columnWidth: number,
+  viewMode: ViewMode
 ) => {
-  const index = dates.findIndex(d => d.getTime() >= xDate.getTime()) - 1;
+  let index;
 
-  const remainderMillis = xDate.getTime() - dates[index].getTime();
+  if (viewMode === ViewMode.Hour) {
+    index = dates.indexesMap.get(
+      new Date(
+        xDate.getFullYear(),
+        xDate.getMonth(),
+        xDate.getDate(),
+        xDate.getHours()
+      ).toISOString()
+    );
+  } else if (viewMode === ViewMode.Day) {
+    index = dates.indexesMap.get(
+      new Date(
+        xDate.getFullYear(),
+        xDate.getMonth(),
+        xDate.getDate()
+      ).toISOString()
+    );
+  } else {
+    index = dates.dates.findIndex(d => d.getTime() >= xDate.getTime()) - 1;
+  }
+
+  const remainderMillis = xDate.getTime() - dates.dates[index].getTime();
   const percentOfInterval =
-    remainderMillis / (dates[index + 1].getTime() - dates[index].getTime());
+    remainderMillis /
+    (dates.dates[index + 1].getTime() - dates.dates[index].getTime());
   const x = index * columnWidth + percentOfInterval * columnWidth;
   return x;
 };
 
 export const taskXCoordinateRTL = (
   xDate: Date,
-  dates: Date[],
-  columnWidth: number
+  dates: { dates: Date[]; indexesMap: Map<string, number> },
+  columnWidth: number,
+  viewMode: ViewMode
 ) => {
-  let x = taskXCoordinate(xDate, dates, columnWidth);
+  let x = taskXCoordinate(xDate, dates, columnWidth, viewMode);
   x += columnWidth;
   return x;
 };
@@ -692,14 +728,15 @@ export const measureTextWidth = (text: string, font: string): number => {
 };
 
 export const calculateNonWorkingPeriods = (
-  shifts: {
-    startDate: string;
-    finishDate: string;
-    withDayOff: boolean;
-    isNextDayEnd: boolean;
-  }[],
+  shifts: Shift[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  dates: { dates: Date[]; indexesMap: Map<string, number> },
+  viewMode: ViewMode,
+  columnWidth: number,
+  rowHeight: number,
+  index: number,
+  fill: string
 ) => {
   function convertToDate(timeStr: string, date: Date, addDay = 0) {
     const [hours, minutes] = timeStr.split(":").map(Number);
@@ -722,16 +759,8 @@ export const calculateNonWorkingPeriods = (
     return day === 6;
   }
 
-  function getDailyNonWorkingPeriods(
-    shifts: {
-      startDate: string;
-      finishDate: string;
-      withDayOff: boolean;
-      isNextDayEnd: boolean;
-    }[],
-    date: Date
-  ) {
-    let intervals = [] as { start: Date; end: Date }[];
+  function getDailyNonWorkingPeriods(shifts: Shift[], date: Date) {
+    let intervals = [] as JSX.Element[];
     let times = [] as any[];
     let nextDayShiftEnd = null as Date | null;
 
@@ -773,7 +802,20 @@ export const calculateNonWorkingPeriods = (
     times.forEach(time => {
       if (time.type === "start") {
         if (openIntervals === 0 && time.time > lastEnd) {
-          intervals.push({ start: lastEnd, end: time.time });
+          const x1 = taskXCoordinate(lastEnd, dates, columnWidth, viewMode);
+          const x2 = taskXCoordinate(time.time, dates, columnWidth, viewMode);
+          const y = taskYCoordinate(index, rowHeight, rowHeight);
+          intervals.push(
+            <rect
+              key={`${x1} ${x2} ${y}`}
+              x={x1}
+              y={y}
+              width={x2 - x1}
+              height={rowHeight}
+              fill={fill}
+              fillOpacity={0.1}
+            />
+          );
         }
         openIntervals += 1;
       } else if (time.type === "end") {
@@ -785,7 +827,20 @@ export const calculateNonWorkingPeriods = (
     });
 
     if (lastEnd < nonWorkingEnd) {
-      intervals.push({ start: lastEnd, end: nonWorkingEnd });
+      const x1 = taskXCoordinate(lastEnd, dates, columnWidth, viewMode);
+      const x2 = taskXCoordinate(nonWorkingEnd, dates, columnWidth, viewMode);
+      const y = taskYCoordinate(index, rowHeight, rowHeight);
+      intervals.push(
+        <rect
+          key={`${x1} ${x2} ${y}`}
+          x={x1}
+          y={y}
+          width={x2 - x1}
+          height={rowHeight}
+          fill={fill}
+          fillOpacity={0.1}
+        />
+      );
     }
 
     return intervals;
@@ -793,7 +848,7 @@ export const calculateNonWorkingPeriods = (
 
   const start = new Date(startDate);
   const end = new Date(endDate);
-  let nonWorkingPeriods = [] as { start: Date; end: Date }[];
+  let nonWorkingPeriods = [] as JSX.Element[];
 
   const nightShift = shifts.find(shift => shift.isNextDayEnd);
 
@@ -808,21 +863,56 @@ export const calculateNonWorkingPeriods = (
       } else if (nightShift && isSaturday(d)) {
         const [hours, minutes] = nightShift.finishDate.split(":").map(Number);
 
-        nonWorkingPeriods.push({
-          start: new Date(
-            d.getFullYear(),
-            d.getMonth(),
-            d.getDate(),
-            hours,
-            minutes
-          ),
-          end: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
-        });
+        const x1 = taskXCoordinate(
+          new Date(d.getFullYear(), d.getMonth(), d.getDate(), hours, minutes),
+          dates,
+          columnWidth,
+          viewMode
+        );
+        const x2 = taskXCoordinate(
+          new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
+          dates,
+          columnWidth,
+          viewMode
+        );
+        const y = taskYCoordinate(index, rowHeight, rowHeight);
+
+        nonWorkingPeriods.push(
+          <rect
+            key={`${x1} ${x2} ${y}`}
+            x={x1}
+            y={y}
+            width={x2 - x1}
+            height={rowHeight}
+            fill={fill}
+            fillOpacity={0.1}
+          />
+        );
       } else {
-        nonWorkingPeriods.push({
-          start: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0),
-          end: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
-        });
+        const x1 = taskXCoordinate(
+          new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0),
+          dates,
+          columnWidth,
+          viewMode
+        );
+        const x2 = taskXCoordinate(
+          new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59),
+          dates,
+          columnWidth,
+          viewMode
+        );
+        const y = taskYCoordinate(index, rowHeight, rowHeight);
+        nonWorkingPeriods.push(
+          <rect
+            key={`${x1} ${x2} ${y}`}
+            x={x1}
+            y={y}
+            width={x2 - x1}
+            height={rowHeight}
+            fill={fill}
+            fillOpacity={0.1}
+          />
+        );
       }
     } else {
       const dailyNonWorkingPeriods = getDailyNonWorkingPeriods(
