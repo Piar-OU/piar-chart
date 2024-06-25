@@ -517,7 +517,7 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   const nonWorkingTime =
     ganttScheduleByY &&
     movingTask &&
-    ganttScheduleByY[Math.floor(movingTask.y / rowHeight)].find(
+    ganttScheduleByY[Math.floor(movingTask.y / rowHeight)]?.find(
       element =>
         movingTask.x1 >= element.props.x &&
         movingTask.x1 < element.props.x + element.props.width
