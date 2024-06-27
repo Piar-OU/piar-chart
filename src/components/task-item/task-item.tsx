@@ -6,7 +6,7 @@ import { BarSmall } from "./bar/bar-small";
 import { Milestone } from "./milestone/milestone";
 import { Project } from "./project/project";
 import style from "./task-list.module.css";
-import { ViewMode } from "../../types/public-types";
+import { Status, ViewMode } from "../../types/public-types";
 import { getProgressPoint, measureTextWidth } from "../../helpers/bar-helper";
 import { BarProgressHandle } from "./bar/bar-progress-handle";
 import { BarDateHandle } from "./bar/bar-date-handle";
@@ -14,7 +14,10 @@ import { BarDateHandle } from "./bar/bar-date-handle";
 export type TaskItemProps = {
   task: BarTask;
   selectedItemsIdSet: Set<string>;
+  isOverdueMode?: boolean;
+  isBehindScheduleMode?: boolean;
   dependencyItemsIdSet: Set<string>;
+  selectedProjectId?: number;
   arrowIndent: number;
   rowHeight: number;
   action: GanttContentMoveAction;
@@ -55,6 +58,9 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   const {
     task,
     selectedItemsIdSet,
+    isOverdueMode,
+    isBehindScheduleMode,
+    selectedProjectId,
     dependencyItemsIdSet,
     project,
     mainTask,
@@ -149,7 +155,9 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   };
 
   const isHovered = hoveredBarTaskId === task.id;
-  const isSameProject = project === task.projectId;
+  const isSameProject = project && project === task.projectId;
+  const isSameSelectedProjectId =
+    selectedProjectId && selectedProjectId === task.projectId;
   const index = Math.floor(task.y / rowHeight);
 
   const isChangedY =
@@ -289,9 +297,12 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
         />
         {(isHovered ||
           isSameProject ||
+          isSameSelectedProjectId ||
           isSelectdItem ||
           (task.isOverlapping && !dependencyItemsIdSet.size) ||
-          isContainedChain) &&
+          isContainedChain ||
+          (isOverdueMode && task.status === Status.overdue) ||
+          (isBehindScheduleMode && task.status === Status.warning)) &&
           action !== "progress" &&
           action !== "end" && (
             <rect
@@ -302,7 +313,11 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
               width={task.x2 - task.x1}
               height={task.height}
               className={
-                isContainedChain
+                isOverdueMode && task.status === Status.overdue
+                  ? style.maskError
+                  : isBehindScheduleMode && task.status === Status.warning
+                  ? style.maskWarn
+                  : isContainedChain
                   ? style.maskError
                   : task.isOverlapping && !dependencyItemsIdSet.size
                   ? style.maskError
@@ -339,7 +354,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           />
         )}
       </g>
-      {!task.isDisabled && (task.projectId || mainTask) && (
+      {!task.isDisabled && (
         <circle
           cx={task.x1 + 3}
           cy={task.y - 6}
@@ -369,7 +384,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           }}
         />
       )}
-      {!task.isDisabled && (task.projectId || mainTask) && (
+      {!task.isDisabled && (
         <circle
           cx={task.x2 - 3}
           cy={task.y + task.height + 6}

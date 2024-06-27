@@ -58,6 +58,12 @@
   stroke-width: 2;
 }
 
+.maskWarn {
+  fill: rgba(218, 212, 8, 0.5);
+  stroke: #faad14;
+  stroke-width: 2;
+}
+
 .selectedMask {
   fill: rgba(0, 100, 0, 0.5);
   stroke: #52c41a;

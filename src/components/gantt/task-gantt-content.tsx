@@ -18,6 +18,9 @@ import style from "../task-item/task-list.module.css";
 export type TaskGanttContentProps = {
   uneducatedTasks: (Task | Task[])[];
   fieldFiltering?: Record<string, any>;
+  isOverdueMode?: boolean;
+  isBehindScheduleMode?: boolean;
+  selectedProjectId?: number;
   tasks: BarTask[];
   dates: Date[];
   ganttScheduleByY?: Record<string, JSX.Element[]>;
@@ -49,11 +52,14 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
   fieldFiltering,
   dates,
   ganttScheduleByY,
+  isOverdueMode,
+  isBehindScheduleMode,
   viewMode,
   hoveredBarTaskId,
   ganttEvent,
   selectedTask,
   rowHeight,
+  selectedProjectId,
   columnWidth,
   timeStep,
   svg,
@@ -443,6 +449,9 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
       (project &&
         ganttEvent.action !== "progress" &&
         ganttEvent.action !== "end") ||
+      (selectedProjectId &&
+        ganttEvent.action !== "progress" &&
+        ganttEvent.action !== "end") ||
       (selectedItem?.projectId &&
         ganttEvent.action !== "progress" &&
         ganttEvent.action !== "end") ||
@@ -456,9 +465,10 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
 
           if (
             !childTask ||
-            !task.projectId ||
+            (!task.projectId && !selectedProjectId) ||
             (task.projectId !== project &&
-              task.projectId !== selectedItem?.projectId)
+              task.projectId !== selectedItem?.projectId &&
+              task.projectId !== selectedProjectId)
           )
             return;
 
@@ -543,7 +553,10 @@ export const TaskGanttContent: React.FC<TaskGanttContentProps> = ({
           return (
             <TaskItem
               task={task}
+              isOverdueMode={isOverdueMode}
+              isBehindScheduleMode={isBehindScheduleMode}
               selectedItemsIdSet={selectedItemsIdSet}
+              selectedProjectId={selectedProjectId}
               dependencyItemsIdSet={dependencyItemsIdSet}
               arrowIndent={arrowIndent}
               hoveredBarTaskId={hoveredBarTaskId}

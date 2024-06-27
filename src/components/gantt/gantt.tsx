@@ -30,6 +30,9 @@ import {
 export const Gantt: React.FunctionComponent<GanttProps> = ({
   tasks,
   fieldFiltering,
+  isOverdueMode,
+  isBehindScheduleMode,
+  selectedProject,
   headerHeight = 50,
   columnWidth = 60,
   listCellWidth = "155px",
@@ -386,6 +389,53 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
     }
   }, [ganttHeight, tasks, headerHeight, rowHeight]);
 
+  useEffect(() => {
+    if (!selectedProject?.start || !dateSetup.dates.dates[0]) return;
+
+    const startProject = new Date(selectedProject.start);
+    const startGantt = new Date(dateSetup.dates.dates[0]);
+
+    if (viewMode === ViewMode.Hour) {
+      setScrollX(
+        // @ts-ignore
+        (columnWidth * (startProject - startGantt)) / (1000 * 60 * 60)
+      );
+    }
+
+    if (viewMode === ViewMode.Day) {
+      setScrollX(
+        // @ts-ignore
+        (columnWidth * (startProject - startGantt)) / (1000 * 60 * 60 * 24)
+      );
+    }
+
+    if (viewMode === ViewMode.Week) {
+      setScrollX(
+        // @ts-ignore
+        (columnWidth * (startProject - startGantt)) / (1000 * 60 * 60 * 24 * 7)
+      );
+    }
+
+    if (viewMode === ViewMode.Month) {
+      const monthsDifference =
+        (startProject.getFullYear() - startGantt.getFullYear()) * 12 +
+        (startProject.getMonth() - startGantt.getMonth());
+      setScrollX(
+        // @ts-ignore
+        columnWidth * monthsDifference
+      );
+    }
+
+    if (viewMode === ViewMode.Year) {
+      const yearsDifference =
+        startProject.getFullYear() - startGantt.getFullYear();
+      setScrollX(
+        // @ts-ignore
+        columnWidth * yearsDifference
+      );
+    }
+  }, [selectedProject, columnWidth, viewMode]);
+
   // scroll events
   useEffect(() => {
     const handleWheel = (event: WheelEvent) => {
@@ -549,7 +599,10 @@ export const Gantt: React.FunctionComponent<GanttProps> = ({
   };
   const barProps: TaskGanttContentProps = {
     uneducatedTasks: tasks,
+    selectedProjectId: selectedProject?.projectId,
     fieldFiltering,
+    isOverdueMode,
+    isBehindScheduleMode,
     tasks: barTasks,
     dates: dateSetup.dates.dates,
     ganttEvent,
