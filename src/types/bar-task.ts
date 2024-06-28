@@ -14,6 +14,7 @@ export interface BarTask extends Task {
   handleWidth: number;
   barChildren: BarTask[];
   projectId?: number;
+  orderId?: number;
   styles: {
     backgroundColor: string;
     backgroundSelectedColor: string;

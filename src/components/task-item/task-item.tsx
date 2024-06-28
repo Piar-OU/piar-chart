@@ -215,6 +215,14 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
   const isMainTask = mainTask?.id === task.id;
   const isContainedChain = dependencyItemsIdSet.has(task.id);
   const isChildTask = childTask?.id === task.id;
+  const isNotSameProject =
+    mainTask && !mainTask.orderId
+      ? false
+      : mainTask && mainTask?.projectId !== task.projectId && !task.orderId
+      ? false
+      : mainTask && mainTask?.projectId !== task.projectId
+      ? true
+      : false;
 
   return (
     <g className={style.barWrapper} tabIndex={0}>
@@ -232,8 +240,8 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           if (action === "end" || action === "move") return;
           if (task.isDisabled) return;
           if (mainTask && !task.isDisabled) {
-            if (mainTask.id === task.id) return;
-            if (isContainedChain) return;
+            if (mainTask.id === task.id || isNotSameProject || isContainedChain)
+              return;
             setChildTask(task);
             return;
           }
@@ -301,6 +309,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           isSelectdItem ||
           (task.isOverlapping && !dependencyItemsIdSet.size) ||
           isContainedChain ||
+          isNotSameProject ||
           (isOverdueMode && task.status === Status.overdue) ||
           (isBehindScheduleMode && task.status === Status.warning)) &&
           action !== "progress" &&
@@ -317,7 +326,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
                   ? style.maskError
                   : isBehindScheduleMode && task.status === Status.warning
                   ? style.maskWarn
-                  : isContainedChain
+                  : isContainedChain || isNotSameProject
                   ? style.maskError
                   : task.isOverlapping && !dependencyItemsIdSet.size
                   ? style.maskError
@@ -362,7 +371,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           fill={
             isMainTask
               ? "#95de64"
-              : isContainedChain
+              : isContainedChain || isNotSameProject
               ? "red"
               : isChildTask
               ? "#ffd666"
@@ -372,14 +381,17 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           strokeWidth={1}
           onMouseDown={e => handleMouseDown(e, true)}
           onMouseEnter={() => {
-            if (!mainTask) return;
-            if (mainTask.id === task.id) return;
-            if (isContainedChain) return;
+            if (
+              !mainTask ||
+              mainTask.id === task.id ||
+              isContainedChain ||
+              isNotSameProject
+            )
+              return;
             setChildTask(task);
           }}
           onMouseLeave={() => {
-            if (!mainTask) return;
-            if (mainTask.id === task.id) return;
+            if (!mainTask || mainTask.id === task.id) return;
             setChildTask(null);
           }}
         />
@@ -392,7 +404,7 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           fill={
             isMainTask
               ? "#95de64"
-              : isContainedChain
+              : isContainedChain || isNotSameProject
               ? "red"
               : isChildTask
               ? "#ffd666"
@@ -402,9 +414,13 @@ export const TaskItem: React.FC<TaskItemProps> = props => {
           strokeWidth={1}
           onMouseDown={e => handleMouseDown(e, false)}
           onMouseEnter={() => {
-            if (!mainTask) return;
-            if (mainTask.id === task.id) return;
-            if (isContainedChain) return;
+            if (
+              !mainTask ||
+              mainTask.id === task.id ||
+              isContainedChain ||
+              isNotSameProject
+            )
+              return;
             setChildTask(task);
           }}
           onMouseLeave={() => {
